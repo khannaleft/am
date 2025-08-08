@@ -1,5 +1,6 @@
 
 
+
 // firebase.ts - Using Firebase v10+ modular SDK.
 
 import { initializeApp, getApp, getApps } from 'firebase/app';
@@ -64,7 +65,22 @@ const mockStores: Store[] = [
   { id: 2, name: 'Aura - Beachside', slug: 'aura-beachside', location: '456 Ocean Ave, Beachtown, USA', bannerUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=2000&auto=format&fit=crop', latitude: 33.9934, longitude: -118.4763 }
 ];
 
-const mockProducts: Product[] = [];
+const mockProducts: Product[] = [
+    {
+    id: 99,
+    storeId: 1,
+    name: "Golden Elixir Face Oil (Special Offer)",
+    description: "Our signature face oil, now at a special price! A luxurious blend of jojoba, rosehip, and argan oils to nourish and restore your skin's natural glow. Suitable for all skin types.",
+    price: 3200.00,
+    discountPrice: 2800.00,
+    imageUrls: [
+      "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1556228724-4ce5a09c2b4d?q=80&w=800&auto=format&fit=crop"
+    ],
+    category: "Face Care",
+    stock: 15
+  }
+];
 
 const mockDiscountCodes: DiscountCode[] = [
   { code: 'AURA10', type: 'percentage', value: 10 },
@@ -205,6 +221,15 @@ export const getOrders = async (): Promise<Order[]> => {
   return snap.docs.map(docSnap => ({ ...docSnap.data(), id: docSnap.id }) as Order);
 };
 
+export const getOrderById = async (orderId: string): Promise<Order | null> => {
+    const orderRef = doc(db, 'orders', orderId);
+    const orderSnap = await getDoc(orderRef);
+    if (!orderSnap.exists()) {
+        return null;
+    }
+    return { ...orderSnap.data(), id: orderSnap.id } as Order;
+};
+
 export const getCategories = async (): Promise<string[]> => {
     const docRef = doc(db, 'product_categories', 'all');
     const docSnap = await getDoc(docRef);
@@ -275,11 +300,24 @@ export const placeOrder = async (orderData: Omit<Order, 'id'>): Promise<string> 
     return orderId;
 };
 
-export const addProduct = async (product: Omit<Product, 'id'>): Promise<Product> => {
+export const addProduct = async (product: Omit<Product, 'id' | 'discountPrice'> & { discountPrice?: number }): Promise<Product> => {
   const newId = Date.now();
-  const newProduct = { ...product, id: newId };
+  const newProductData: Omit<Product, 'id'> = {
+    storeId: product.storeId,
+    name: product.name,
+    description: product.description,
+    price: product.price,
+    imageUrls: product.imageUrls,
+    category: product.category,
+    stock: product.stock,
+  };
+  if (product.discountPrice && product.discountPrice > 0) {
+    (newProductData as Product).discountPrice = product.discountPrice;
+  }
+  
+  const newProduct = { ...newProductData, id: newId };
   await setDoc(doc(db, 'products', newId.toString()), newProduct);
-  return newProduct;
+  return newProduct as Product;
 };
 
 export const updateOrderStatus = async (orderId: string, status: Order['status']): Promise<void> => {

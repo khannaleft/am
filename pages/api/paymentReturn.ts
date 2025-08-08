@@ -18,12 +18,13 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     const { status, txnid } = req.body;
 
     if (status === 'success') {
-      // On success, build the redirect URL with query params.
-      const successUrl = `/orders?payment=success&order_id=${txnid || ''}`;
+      // On success, build the redirect URL with query params to the dedicated success page.
+      const successUrl = `/orders/success?order_id=${txnid || ''}`;
       // Use HTTP 303 See Other for the POST-redirect-GET pattern.
       res.redirect(303, successUrl);
     } else {
       // On failure, redirect to the home page with a failure param.
+      // A dedicated failure page could also be created here.
       const failureUrl = `/?payment=failure&order_id=${txnid || ''}`;
       res.redirect(303, failureUrl);
     }

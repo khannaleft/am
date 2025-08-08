@@ -27,6 +27,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState(0);
+  const [discountPrice, setDiscountPrice] = useState(0);
   const [imageUrls, setImageUrls] = useState('');
   const [category, setCategory] = useState('');
   const [newCategory, setNewCategory] = useState('');
@@ -39,6 +40,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
         setName('');
         setDescription('');
         setPrice(0);
+        setDiscountPrice(0);
         setImageUrls('');
         setCategory(categories.length > 0 ? categories[0] : '--add-new--');
         setNewCategory('');
@@ -81,9 +83,15 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
       setIsSubmitting(false);
       return;
     }
+    
+    if (discountPrice > 0 && discountPrice >= price) {
+        addToast('Discount price must be less than the original price.', 'error');
+        setIsSubmitting(false);
+        return;
+    }
 
     try {
-        await onAddProduct({
+        const productData: Omit<Product, 'id'> = {
           storeId: Number(storeId),
           name,
           description,
@@ -91,7 +99,13 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
           imageUrls: imageUrls.split(',').map(url => url.trim()).filter(url => url),
           category: finalCategory,
           stock,
-        });
+        };
+
+        if (discountPrice > 0) {
+            productData.discountPrice = discountPrice;
+        }
+
+        await onAddProduct(productData);
         onClose();
     } catch (error) {
         addToast('Failed to add product.', 'error');
@@ -131,14 +145,18 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div>
                     <label className="block text-sm font-medium text-text-secondary mb-1">Price (₹)</label>
-                    <input type="number" step="0.01" value={price} onChange={e => setPrice(parseFloat(e.target.value) || 0)} className="w-full p-3 rounded-lg bg-primary border border-glass-border focus:outline-none focus:ring-2 focus:ring-accent" required disabled={isSubmitting} />
+                    <input type="number" step="0.01" min="0" value={price} onChange={e => setPrice(parseFloat(e.target.value) || 0)} className="w-full p-3 rounded-lg bg-primary border border-glass-border focus:outline-none focus:ring-2 focus:ring-accent" required disabled={isSubmitting} />
                 </div>
-                <div>
+                 <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Discount Price (₹) (optional)</label>
+                    <input type="number" step="0.01" min="0" value={discountPrice} onChange={e => setDiscountPrice(parseFloat(e.target.value) || 0)} className="w-full p-3 rounded-lg bg-primary border border-glass-border focus:outline-none focus:ring-2 focus:ring-accent" disabled={isSubmitting} />
+                </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div>
                     <label className="block text-sm font-medium text-text-secondary mb-1">Stock Quantity</label>
                     <input type="number" value={stock} onChange={e => setStock(parseInt(e.target.value, 10) || 0)} className="w-full p-3 rounded-lg bg-primary border border-glass-border focus:outline-none focus:ring-2 focus:ring-accent" required disabled={isSubmitting} />
                 </div>
-            </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-medium text-text-secondary mb-1">Category</label>
                     <select value={category} onChange={e => setCategory(e.target.value)} className="w-full p-3 rounded-lg bg-primary border border-glass-border focus:outline-none focus:ring-2 focus:ring-accent capitalize" required disabled={isSubmitting}>
@@ -146,20 +164,22 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                         <option value="--add-new--">Add new category...</option>
                     </select>
                 </div>
+            </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {category === '--add-new--' && (
                      <div>
                         <label className="block text-sm font-medium text-text-secondary mb-1">New Category Name</label>
                         <input type="text" value={newCategory} onChange={e => setNewCategory(e.target.value)} className="w-full p-3 rounded-lg bg-primary border border-glass-border focus:outline-none focus:ring-2 focus:ring-accent" required={category === '--add-new--'} disabled={isSubmitting} />
                     </div>
                 )}
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">Store</label>
-                <select value={storeId} onChange={e => setStoreId(Number(e.target.value))} className="w-full p-3 rounded-lg bg-primary border border-glass-border focus:outline-none focus:ring-2 focus:ring-accent" required disabled={!!lockedStoreId || isSubmitting}>
-                    {stores.map(store => (
-                        <option key={store.id} value={store.id}>{store.name}</option>
-                    ))}
-                </select>
+                <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Store</label>
+                    <select value={storeId} onChange={e => setStoreId(Number(e.target.value))} className="w-full p-3 rounded-lg bg-primary border border-glass-border focus:outline-none focus:ring-2 focus:ring-accent" required disabled={!!lockedStoreId || isSubmitting}>
+                        {stores.map(store => (
+                            <option key={store.id} value={store.id}>{store.name}</option>
+                        ))}
+                    </select>
+                </div>
             </div>
             <div className="pt-4 flex justify-end gap-4 border-t border-glass-border">
                 <button type="button" onClick={onClose} className="bg-primary text-text-primary font-bold py-2.5 px-6 rounded-lg border border-glass-border hover:bg-black/10 dark:hover:bg-white/10 transition-colors" disabled={isSubmitting}>Cancel</button>

@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useCallback } from 'react';
 import { Product } from '../types';
 import Icon from './Icon';
@@ -44,6 +45,7 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product, onAddToC
 
   const isOutOfStock = product.stock === 0;
   const isLowStock = product.stock > 0 && product.stock <= 10;
+  const onSale = typeof product.discountPrice === 'number' && product.discountPrice < product.price;
 
   return (
     <div className="container mx-auto px-4 pt-32 md:pt-40 pb-16">
@@ -92,6 +94,7 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product, onAddToC
           <div className="flex flex-col py-4">
             <div className="flex items-center gap-4 mb-2">
                 <p className="text-sm text-accent font-bold uppercase tracking-wider">{product.category}</p>
+                {onSale && <span className="text-sm font-bold bg-green-500 text-white py-1 px-3 rounded-full">Sale</span>}
                 {isOutOfStock && <span className="text-sm font-bold bg-red-500 text-white py-1 px-3 rounded-full">Out of Stock</span>}
                 {isLowStock && <span className="text-sm font-bold bg-yellow-500 text-black py-1 px-3 rounded-full">Low Stock</span>}
             </div>
@@ -100,7 +103,16 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product, onAddToC
             <p className="text-text-secondary text-base leading-relaxed mb-8">{product.description}</p>
             
             <div className="mt-auto space-y-6">
-                 <span className="text-4xl font-bold font-sans text-text-primary">₹{product.price.toFixed(2)}</span>
+                <div className="flex items-baseline gap-4">
+                     {onSale && product.discountPrice ? (
+                        <>
+                            <span className="text-4xl font-bold font-sans text-green-600 dark:text-green-400">₹{product.discountPrice.toFixed(2)}</span>
+                            <span className="text-2xl font-sans text-text-secondary line-through">₹{product.price.toFixed(2)}</span>
+                        </>
+                    ) : (
+                        <span className="text-4xl font-bold font-sans text-text-primary">₹{product.price.toFixed(2)}</span>
+                    )}
+                </div>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                     <button
                         onClick={() => onAddToCart(product)}

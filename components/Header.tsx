@@ -30,7 +30,7 @@ const WishlistPopover: React.FC<{ wishlistedProducts: Product[], onProductClick:
                                 <img src={product.imageUrls[0]} alt={product.name} className="w-14 h-14 object-cover rounded-md flex-shrink-0 bg-primary" />
                                 <div className="flex-grow overflow-hidden">
                                     <p className="font-semibold text-text-primary truncate">{product.name}</p>
-                                    <p className="text-sm text-text-secondary">₹{product.price.toFixed(2)}</p>
+                                    <p className="text-sm text-text-secondary">₹{(product.discountPrice ?? product.price).toFixed(2)}</p>
                                 </div>
                             </div>
                         ))}
@@ -69,19 +69,22 @@ const CartPopover: React.FC<{
         <div className="flex flex-col">
             <div className="p-4 space-y-3 overflow-y-auto max-h-80">
                  <h4 className="font-bold px-2">Your Cart</h4>
-                {cartItems.slice(0, 3).map(item => (
-                    <div key={item.id} className="flex items-start gap-4 p-2 rounded-lg hover:bg-primary transition-colors">
-                        <img src={item.imageUrls[0]} alt={item.name} className="w-14 h-14 object-cover rounded-md flex-shrink-0 bg-primary" />
-                        <div className="flex-grow overflow-hidden">
-                            <p className="font-semibold text-text-primary truncate">{item.name}</p>
-                            <p className="text-sm text-text-secondary">Qty: {item.quantity}</p>
-                            <p className="text-sm font-bold text-text-primary mt-1">₹{(item.price * item.quantity).toFixed(2)}</p>
+                {cartItems.slice(0, 3).map(item => {
+                    const priceToUse = item.discountPrice ?? item.price;
+                    return (
+                        <div key={item.id} className="flex items-start gap-4 p-2 rounded-lg hover:bg-primary transition-colors">
+                            <img src={item.imageUrls[0]} alt={item.name} className="w-14 h-14 object-cover rounded-md flex-shrink-0 bg-primary" />
+                            <div className="flex-grow overflow-hidden">
+                                <p className="font-semibold text-text-primary truncate">{item.name}</p>
+                                <p className="text-sm text-text-secondary">Qty: {item.quantity}</p>
+                                <p className="text-sm font-bold text-text-primary mt-1">₹{(priceToUse * item.quantity).toFixed(2)}</p>
+                            </div>
+                            <button onClick={() => onRemoveItem(item.id)} className="p-1 text-text-secondary hover:text-red-500 transition-colors">
+                               <Icon name="trash" className="w-4 h-4"/>
+                            </button>
                         </div>
-                        <button onClick={() => onRemoveItem(item.id)} className="p-1 text-text-secondary hover:text-red-500 transition-colors">
-                           <Icon name="trash" className="w-4 h-4"/>
-                        </button>
-                    </div>
-                ))}
+                    );
+                })}
                  {cartItems.length > 3 && <p className="text-center text-xs text-text-secondary py-1">...and {cartItems.length - 3} more items.</p>}
             </div>
             <div className="p-3 border-t border-glass-border space-y-3 bg-primary/30">
@@ -127,7 +130,7 @@ const Header: React.FC<HeaderProps> = ({ selectedStoreId }) => {
     );
 
     const activeCartItems = useMemo(() => (selectedStoreId && cartItems[selectedStoreId]) ? (cartItems[selectedStoreId] || []) : [], [cartItems, selectedStoreId]);
-    const cartSubtotal = useMemo(() => activeCartItems.reduce((sum, item) => sum + item.price * item.quantity, 0), [activeCartItems]);
+    const cartSubtotal = useMemo(() => activeCartItems.reduce((sum, item) => sum + (item.discountPrice ?? item.price) * item.quantity, 0), [activeCartItems]);
 
 
     useEffect(() => {

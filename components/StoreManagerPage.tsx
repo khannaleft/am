@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Product, Order, Store, Toast, Offer } from '../types';
 import Icon from './Icon';
@@ -122,7 +123,11 @@ const InventoryManagement = ({ storeProducts, onUpdateProductStock, onAddProduct
              <tr className="border-b border-glass-border last:border-none hover:bg-primary">
               <td className="p-4 font-semibold">{product.name}</td>
               <td className="p-4 text-text-secondary hidden md:table-cell">{product.category}</td>
-              <td className="p-4 font-mono font-semibold text-lg text-center">{currentStock}</td>
+              <td className="p-4">₹{product.price.toFixed(2)}</td>
+              <td className="p-4 text-green-600 font-semibold">
+                {product.discountPrice ? `₹${product.discountPrice.toFixed(2)}` : '—'}
+              </td>
+              <td className="p-4 font-semibold text-center">{currentStock}</td>
               <td className="p-4">
                 <form onSubmit={(e) => { e.preventDefault(); handleUpdate(); }} className="flex items-center gap-2">
                     <input 
@@ -155,14 +160,16 @@ const InventoryManagement = ({ storeProducts, onUpdateProductStock, onAddProduct
                 <tr className="border-b border-glass-border">
                     <th className="p-4 font-semibold">Product</th>
                     <th className="p-4 font-semibold hidden md:table-cell">Category</th>
-                    <th className="p-4 font-semibold text-center">Current Stock</th>
+                    <th className="p-4 font-semibold">Price</th>
+                    <th className="p-4 font-semibold">Discount</th>
+                    <th className="p-4 font-semibold text-center">Stock</th>
                     <th className="p-4 font-semibold">Update Stock</th>
                 </tr>
                 </thead>
                 <tbody>
                     {storeProducts.length > 0 ? storeProducts.map(p => <ProductRow key={p.id} product={p} />) : (
                         <tr>
-                            <td colSpan={4} className="text-center p-8 text-text-secondary">
+                            <td colSpan={6} className="text-center p-8 text-text-secondary">
                                 No products found for this store.
                             </td>
                         </tr>

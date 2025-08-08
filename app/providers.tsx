@@ -64,7 +64,6 @@ interface AppContextType {
 
   handleOpenCart: (storeId: number) => void;
   handleDirectCheckout: (storeId: number) => void;
-  handleOpenPaymentResultModal: () => void;
 }
 
 export const AppContext = createContext<AppContextType | null>(null);
@@ -111,10 +110,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsCartModalOpen(false);
     setIsCheckoutModalOpen(true);
   }, []);
-  
-  const handleOpenPaymentResultModal = useCallback(() => {
-    setIsCheckoutModalOpen(true);
-  }, []);
 
   const handleCloseCheckout = useCallback(() => {
     setIsCheckoutModalOpen(false);
@@ -129,11 +124,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const cartTotals = useMemo(() => {
     const subtotal = activeCartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const discountAmount = appliedDiscount ? (appliedDiscount.type === 'percentage' ? subtotal * (appliedDiscount.value / 100) : appliedDiscount.value) : 0;
-    const finalDiscount = Math.min(subtotal, discountAmount);
-    const taxes = (subtotal - finalDiscount) * 0.08;
-    const total = subtotal - finalDiscount + taxes;
-    return { subtotal, discountAmount: finalDiscount, taxes, total };
+    
+    const totalAfterItemDiscounts = activeCartItems.reduce((sum, item) => {
+      const priceToUse = item.discountPrice ?? item.price;
+      return sum + priceToUse * item.quantity;
+    }, 0);
+
+    const couponDiscountValue = appliedDiscount
+      ? (appliedDiscount.type === 'percentage'
+        ? totalAfterItemDiscounts * (appliedDiscount.value / 100)
+        : appliedDiscount.value)
+      : 0;
+
+    const finalCouponDiscount = Math.min(totalAfterItemDiscounts, couponDiscountValue);
+    
+    const totalDiscount = (subtotal - totalAfterItemDiscounts) + finalCouponDiscount;
+    
+    const priceAfterAllDiscounts = totalAfterItemDiscounts - finalCouponDiscount;
+    const taxes = priceAfterAllDiscounts * 0.08;
+    const total = priceAfterAllDiscounts + taxes;
+
+    return { subtotal, discountAmount: totalDiscount, taxes, total };
   }, [activeCartItems, appliedDiscount]);
 
   const addToast = useCallback((message: string, type: Toast['type'] = 'info') => {
@@ -389,7 +400,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     onLoginClick, isAuthModalOpen, onCloseAuthModal,
     handleOpenCart,
     handleDirectCheckout,
-    handleOpenPaymentResultModal,
   };
 
   return (

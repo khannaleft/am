@@ -18,6 +18,7 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onProductClick, onToggleWishlist, wishlistItems, cartQuantity }) => {
   const isInWishlist = wishlistItems.includes(product.id);
   const isOutOfStock = product.stock === 0;
+  const onSale = typeof product.discountPrice === 'number' && product.discountPrice < product.price;
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
@@ -63,7 +64,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onProdu
                 />
               ))}
             </div>
-            {isOutOfStock && <span className="absolute top-4 left-4 text-xs font-bold bg-red-500/80 backdrop-blur-sm text-white py-1 px-3 rounded-full z-10">Out of Stock</span>}
+            
+            <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
+                {onSale && <span className="text-xs font-bold bg-green-500/80 backdrop-blur-sm text-white py-1 px-3 rounded-full">Sale</span>}
+                {isOutOfStock && <span className="text-xs font-bold bg-red-500/80 backdrop-blur-sm text-white py-1 px-3 rounded-full">Out of Stock</span>}
+            </div>
             
             <button
                 onClick={handleWishlistClick}
@@ -94,7 +99,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onProdu
             <p className="text-xs text-text-secondary mb-1">{product.category}</p>
             <h3 className="text-lg font-serif font-bold text-text-primary mb-2 transition-colors duration-300 group-hover:text-accent flex-grow">{product.name}</h3>
             <div className="mt-4 flex justify-between items-center">
-              <span className="text-xl font-bold font-sans text-text-primary">₹{product.price.toFixed(2)}</span>
+                <div className="flex flex-col">
+                    {onSale && product.discountPrice ? (
+                        <>
+                            <span className="text-xl font-bold font-sans text-green-600 dark:text-green-400">₹{product.discountPrice.toFixed(2)}</span>
+                            <span className="text-sm font-sans text-text-secondary line-through">₹{product.price.toFixed(2)}</span>
+                        </>
+                    ) : (
+                        <span className="text-xl font-bold font-sans text-text-primary">₹{product.price.toFixed(2)}</span>
+                    )}
+                </div>
               <button
                 onClick={handleAddToCartClick}
                 disabled={isOutOfStock}

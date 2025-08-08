@@ -1,5 +1,6 @@
 
 
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -50,23 +51,14 @@ const PayUConfirmation: React.FC<{ onPay: () => void; isLoading: boolean, total:
 
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, onPlaceOrder, currentUser, onLoginRequest, cartTotals, cartItems }) => {
-  const [step, setStep] = useState<'details' | 'payment' | 'processing' | 'success' | 'failure'>('details');
+  const [step, setStep] = useState<'details' | 'payment' | 'processing'>('details');
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const { addToast } = useAppContext();
   
   // Reset state when modal is opened or closed
   useEffect(() => {
-    // Check for payment status from URL query params
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('payment') === 'success' && params.get('order_id')) {
-        setStep('success');
-        // Clear query params
-        window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (params.get('payment') === 'failure') {
-        setStep('failure');
-        window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (isOpen) {
+    if (isOpen) {
         setStep('details');
         setPhone(currentUser?.phone || '');
         setPhoneError(null);
@@ -79,10 +71,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, onPlaceO
         return () => clearTimeout(timer);
     }
   }, [isOpen, currentUser]);
-
-  const handleClose = () => {
-    onClose();
-  };
   
   const handleProceedToPayment = () => {
     setPhoneError(null);
@@ -124,7 +112,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, onPlaceO
         // The success/failure is handled by PayU redirecting back to our `surl` or `furl`.
 
     } catch (error: any) {
-        setStep('failure');
+        setStep('details'); // Go back to details step on failure
         addToast(error.message || 'Payment failed. Please try again.', 'error');
     }
   };
@@ -133,28 +121,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, onPlaceO
 
   const renderContent = () => {
     switch(step) {
-      case 'success':
-        return (
-          <div className="p-10 text-center">
-            <Icon name="check-circle" className="w-16 h-16 mx-auto text-green-500"/>
-            <h3 className="text-2xl font-bold mt-4">Order Placed Successfully!</h3>
-            <p className="text-text-secondary mt-2">Your payment was successful. You will receive a confirmation email shortly.</p>
-          </div>
-        );
-      case 'failure':
-          return (
-              <div className="p-10 text-center">
-                  <Icon name="x-circle" className="w-16 h-16 mx-auto text-red-500"/>
-                  <h3 className="text-2xl font-bold mt-4">Payment Failed</h3>
-                  <p className="text-text-secondary mt-2">Something went wrong with your payment. Please check your details and try again.</p>
-                  <button
-                      onClick={() => setStep('payment')}
-                      className="mt-6 bg-accent text-white font-bold py-3 px-6 rounded-lg hover:opacity-85"
-                  >
-                      Try Again
-                  </button>
-              </div>
-          );
       case 'payment':
       case 'processing':
           return <PayUConfirmation onPay={handleFinalizePayment} isLoading={step === 'processing'} total={cartTotals.total} />;
@@ -214,16 +180,16 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, onPlaceO
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center transition-opacity duration-300 p-4" onClick={handleClose}>
+    <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center transition-opacity duration-300 p-4" onClick={onClose}>
       <div
         className="bg-glass-bg backdrop-blur-xl border border-glass-border text-text-primary rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col animate-fade-in-up"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center p-6 border-b border-glass-border">
           <h2 className="text-2xl font-serif font-bold">
-            {step === 'success' ? 'Thank You!' : (step === 'failure' ? 'Payment Issue' : (step === 'payment' || step === 'processing' ? 'Complete Payment' : 'Checkout'))}
+            {step === 'payment' || step === 'processing' ? 'Complete Payment' : 'Checkout'}
           </h2>
-          <button onClick={handleClose} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
             <Icon name="close" className="w-6 h-6" />
           </button>
         </div>

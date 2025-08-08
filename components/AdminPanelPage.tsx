@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Product, Order, DiscountCode, Store, Toast, Offer } from '../types';
 import Icon from './Icon';
@@ -113,8 +114,8 @@ const ProductManagement = ({ allProducts, onAddProductClick, stores }: { allProd
               <tr className="border-b border-glass-border">
                 <th className="p-4 font-semibold">Name</th>
                 <th className="p-4 font-semibold">Store</th>
-                <th className="p-4 font-semibold">Category</th>
                 <th className="p-4 font-semibold">Price</th>
+                <th className="p-4 font-semibold">Discount Price</th>
                 <th className="p-4 font-semibold">Stock</th>
               </tr>
             </thead>
@@ -123,8 +124,10 @@ const ProductManagement = ({ allProducts, onAddProductClick, stores }: { allProd
                 <tr key={product.id} className="border-b border-glass-border last:border-none hover:bg-secondary">
                   <td className="p-4 font-semibold">{product.name}</td>
                   <td className="p-4 text-text-secondary">{getStoreName(product.storeId)}</td>
-                  <td className="p-4 text-text-secondary">{product.category}</td>
                   <td className="p-4">₹{product.price.toFixed(2)}</td>
+                  <td className="p-4 text-green-600 font-semibold">
+                    {product.discountPrice ? `₹${product.discountPrice.toFixed(2)}` : '—'}
+                  </td>
                   <td className="p-4">{product.stock}</td>
                 </tr>
               ))}

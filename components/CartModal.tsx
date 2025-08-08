@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState } from 'react';
@@ -83,34 +84,43 @@ const CartModal: React.FC<CartModalProps> = ({
             </div>
           ) : (
             <ul className="space-y-5">
-              {cartItems.map((item, index) => (
-                <li key={item.id} className="flex items-start gap-4 animate-fade-in-up" style={{ animationDelay: `${index * 50}ms`}}>
-                  <div className="relative flex-shrink-0">
-                    <img src={item.imageUrls[0]} alt={item.name} className="w-24 h-28 rounded-lg object-cover bg-primary" />
-                    <button onClick={() => onRemoveItem(item.id)} className="absolute -top-2 -right-2 bg-secondary rounded-full p-1 text-text-secondary hover:text-red-500 hover:bg-red-500/10 transition-all shadow-md">
-                        <Icon name="close" className="w-4 h-4"/>
-                     </button>
-                  </div>
-                  <div className="flex-grow flex flex-col h-28">
-                    <h3 className="font-bold font-serif text-lg leading-tight">{item.name}</h3>
-                    <p className="text-sm text-text-secondary">₹{item.price.toFixed(2)}</p>
-                     {item.quantity >= item.stock && <p className="text-xs text-red-500 mt-1">Max stock reached</p>}
-                    <div className="mt-auto flex justify-between items-center">
-                        <div className="flex items-center gap-1 bg-primary p-1 rounded-full border border-glass-border">
-                          <button onClick={() => onUpdateQuantity(item.id, item.quantity - 1)} className="p-1.5 rounded-full hover:bg-secondary"><Icon name="minus" className="w-4 h-4" /></button>
-                          <span className="font-semibold w-6 text-center text-sm">{item.quantity}</span>
-                          <button 
-                            onClick={() => onUpdateQuantity(item.id, item.quantity + 1)} 
-                            disabled={item.quantity >= item.stock}
-                            className="p-1.5 rounded-full hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed">
-                            <Icon name="plus" className="w-4 h-4" />
-                          </button>
+              {cartItems.map((item, index) => {
+                  const onSale = typeof item.discountPrice === 'number' && item.discountPrice < item.price;
+                  const priceToUse = item.discountPrice ?? item.price;
+                  return (
+                    <li key={item.id} className="flex items-start gap-4 animate-fade-in-up" style={{ animationDelay: `${index * 50}ms`}}>
+                      <div className="relative flex-shrink-0">
+                        <img src={item.imageUrls[0]} alt={item.name} className="w-24 h-28 rounded-lg object-cover bg-primary" />
+                        <button onClick={() => onRemoveItem(item.id)} className="absolute -top-2 -right-2 bg-secondary rounded-full p-1 text-text-secondary hover:text-red-500 hover:bg-red-500/10 transition-all shadow-md">
+                            <Icon name="close" className="w-4 h-4"/>
+                         </button>
+                      </div>
+                      <div className="flex-grow flex flex-col h-28">
+                        <h3 className="font-bold font-serif text-lg leading-tight">{item.name}</h3>
+                        <div className="flex items-baseline gap-2">
+                           <p className={`text-sm ${onSale ? 'text-green-600 font-bold' : 'text-text-secondary'}`}>
+                                ₹{priceToUse.toFixed(2)}
+                            </p>
+                            {onSale && <p className="text-xs text-text-secondary line-through">₹{item.price.toFixed(2)}</p>}
                         </div>
-                        <p className="font-bold text-lg">₹{(item.price * item.quantity).toFixed(2)}</p>
-                    </div>
-                  </div>
-                </li>
-              ))}
+                         {item.quantity >= item.stock && <p className="text-xs text-red-500 mt-1">Max stock reached</p>}
+                        <div className="mt-auto flex justify-between items-center">
+                            <div className="flex items-center gap-1 bg-primary p-1 rounded-full border border-glass-border">
+                              <button onClick={() => onUpdateQuantity(item.id, item.quantity - 1)} className="p-1.5 rounded-full hover:bg-secondary"><Icon name="minus" className="w-4 h-4" /></button>
+                              <span className="font-semibold w-6 text-center text-sm">{item.quantity}</span>
+                              <button 
+                                onClick={() => onUpdateQuantity(item.id, item.quantity + 1)} 
+                                disabled={item.quantity >= item.stock}
+                                className="p-1.5 rounded-full hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed">
+                                <Icon name="plus" className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <p className="font-bold text-lg">₹{(priceToUse * item.quantity).toFixed(2)}</p>
+                        </div>
+                      </div>
+                    </li>
+                  );
+              })}
             </ul>
           )}
         </div>
@@ -156,12 +166,15 @@ const CartModal: React.FC<CartModalProps> = ({
              </div>
             <div className="space-y-2 text-text-secondary text-sm">
                 <div className="flex justify-between"><span>Subtotal</span><span className="font-medium text-text-primary">₹{cartTotals.subtotal.toFixed(2)}</span></div>
-                {appliedDiscount && (
-                    <div className="flex justify-between text-green-500">
-                        <span className="flex items-center gap-2">Discount ({appliedDiscount.code}) <button onClick={handleRemoveDiscountClick} className="text-xs text-red-500 underline">(remove)</button></span>
-                        <span className="font-medium">-₹{cartTotals.discountAmount.toFixed(2)}</span>
-                    </div>
-                )}
+                
+                <div className={`flex justify-between ${cartTotals.discountAmount > 0 ? 'text-green-500' : ''}`}>
+                    <span className="flex items-center gap-2">
+                        Discount
+                        {appliedDiscount && <button onClick={handleRemoveDiscountClick} className="text-xs text-red-500 underline">(remove {appliedDiscount.code})</button>}
+                    </span>
+                    <span className="font-medium">-₹{cartTotals.discountAmount.toFixed(2)}</span>
+                </div>
+
                 <div className="flex justify-between"><span>Taxes (8%)</span><span className="font-medium text-text-primary">₹{cartTotals.taxes.toFixed(2)}</span></div>
                 <div className="flex justify-between font-bold text-lg text-text-primary mt-2 border-t border-glass-border pt-3"><span>Total</span><span>₹{cartTotals.total.toFixed(2)}</span></div>
             </div>

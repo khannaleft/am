@@ -30,7 +30,9 @@ const FeaturedProductCarousel: React.FC<FeaturedProductCarouselProps> = ({ produ
   return (
     <div className="container mx-auto px-4 pb-12">
         <div className="relative w-full h-[400px] md:h-[350px] overflow-hidden rounded-3xl shadow-lg group bg-secondary/50 border border-glass-border">
-        {products.map((product, index) => (
+        {products.map((product, index) => {
+            const onSale = typeof product.discountPrice === 'number' && product.discountPrice < product.price;
+            return (
             <div
             key={product.id}
             className={`absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out ${
@@ -64,14 +66,24 @@ const FeaturedProductCarousel: React.FC<FeaturedProductCarouselProps> = ({ produ
                                 >
                                 View Details
                             </button>
-                            <span className="text-2xl font-bold font-sans text-text-primary">
-                                ₹{product.price.toFixed(2)}
-                            </span>
+                            <div className="flex items-baseline gap-3">
+                                {onSale && product.discountPrice ? (
+                                    <>
+                                        <span className="text-2xl font-bold font-sans text-green-600 dark:text-green-400">₹{product.discountPrice.toFixed(2)}</span>
+                                        <span className="text-lg font-sans text-text-secondary line-through">₹{product.price.toFixed(2)}</span>
+                                    </>
+                                ) : (
+                                    <span className="text-2xl font-bold font-sans text-text-primary">
+                                        ₹{product.price.toFixed(2)}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        ))}
+            );
+        })}
 
         {/* Navigation Arrows */}
         {products.length > 1 && (
