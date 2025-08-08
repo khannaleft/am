@@ -69,7 +69,7 @@ interface AppContextType {
 export const AppContext = createContext<AppContextType | null>(null);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useLocalStorage<Theme>('theme', 'dark');
+  const [theme, setTheme] = useLocalStorage<Theme>('theme', 'light');
   const [cartItems, setCartItems] = useLocalStorage<Record<number, CartItem[]>>('multiCart', {});
   const [wishlistItems, setWishlistItems] = useLocalStorage<number[]>('wishlist', []);
   const [appliedDiscount, setAppliedDiscount] = useLocalStorage<DiscountCode | null>('appliedDiscount', null);
