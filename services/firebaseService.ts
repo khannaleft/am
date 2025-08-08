@@ -291,7 +291,7 @@ export const addCategory = async (categoryName: string): Promise<void> => {
     const categoryRef = doc(db, "product_categories", "all");
     await updateDoc(categoryRef, {
         names: arrayUnion(categoryName)
-    }, { merge: true });
+    });
 };
 
 export const addOffer = async (offerData: Omit<Offer, 'id'>): Promise<Offer> => {
