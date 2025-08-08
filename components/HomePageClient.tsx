@@ -6,6 +6,36 @@ import { useRouter } from 'next/navigation';
 import Header from './Header';
 import Image from 'next/image';
 import Icon from './Icon';
+import OfferCarousel, { Offer } from './OfferCarousel';
+
+// Mock data for the carousel offers
+const offers: Offer[] = [
+  {
+    id: 1,
+    title: 'First Purchase, 15% Off',
+    description: 'Begin your journey with Aura and enjoy a special discount on your first order. Use code AURA15.',
+    imageUrl: 'https://images.unsplash.com/photo-1598454449072-3544a3fb3af8?q=80&w=2574&auto=format&fit=crop',
+    ctaText: 'Shop Face Care',
+    ctaLink: '/1' 
+  },
+  {
+    id: 2,
+    title: 'Free Shipping Over ₹5000',
+    description: 'Indulge in our complete collection and we\'ll deliver it to your doorstep, on us.',
+    imageUrl: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=2564&auto=format&fit=crop',
+    ctaText: 'Explore All Products',
+    ctaLink: '/2'
+  },
+  {
+    id: 3,
+    title: 'New! The Serenity Body Oil',
+    description: 'Discover our latest creation, a calming blend of lavender and chamomile for ultimate relaxation.',
+    imageUrl: 'https://images.unsplash.com/photo-1563237023-b1e970526dcb?q=80&w=2574&auto=format&fit=crop',
+    ctaText: 'Discover Now',
+    ctaLink: '/1'
+  },
+];
+
 
 interface HomePageClientProps {
     stores: Store[];
@@ -64,43 +94,45 @@ const HomePageClientContent: React.FC<HomePageClientProps> = ({ stores }) => {
     };
 
     return (
-        <div className="min-h-screen bg-primary flex flex-col items-center justify-center p-4 text-center relative overflow-hidden">
+        <div className="min-h-screen bg-primary">
             <Header selectedStoreId={null} />
-            <div className="absolute inset-0 bg-center bg-cover -z-10" style={{backgroundImage: "url('https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=2500&auto=format&fit=crop')", filter: 'grayscale(50%) brightness(50%)'}}></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent -z-10"></div>
             
-            <div className="w-full flex flex-col items-center mt-20 md:mt-0">
-                <div className="animate-fade-in-up">
-                    <h1 className="text-5xl md:text-7xl font-serif font-bold text-white mb-4 drop-shadow-xl">
-                        Aura
-                    </h1>
-                    <p className="text-xl md:text-2xl text-white/80 mb-12 drop-shadow-lg max-w-2xl">
+            <div className="container mx-auto px-4 pt-32 md:pt-40 animate-fade-in-up">
+                <OfferCarousel offers={offers} />
+            </div>
+            
+            <main className="w-full flex flex-col items-center py-16 md:py-24">
+                <div className="text-center animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+                    <h2 className="text-4xl md:text-5xl font-serif font-bold text-text-primary mb-4">
+                        Our Sanctuaries
+                    </h2>
+                    <p className="text-lg md:text-xl text-text-secondary mb-12 max-w-2xl mx-auto">
                         Your journey to natural radiance begins here. Please select a store to begin shopping.
                     </p>
                 </div>
                 
-                <div className="flex flex-col items-center justify-center mb-8 gap-4 animate-fade-in-up" style={{animationDelay: '200ms'}}>
+                <div className="flex flex-col items-center justify-center mb-8 gap-4 animate-fade-in-up" style={{animationDelay: '300ms'}}>
                     <button 
                         onClick={handleFindNearby}
                         disabled={locationStatus === 'loading'}
-                        className="flex items-center gap-3 bg-white/20 backdrop-blur-md text-white font-bold py-3 px-6 rounded-lg border border-white/20 hover:bg-white/30 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-wait"
+                        className="flex items-center gap-3 bg-secondary text-text-primary font-bold py-3 px-6 rounded-lg border border-glass-border hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-wait"
                     >
-                        <Icon name="location-marker" className="w-6 h-6 text-accent" />
+                        <Icon name="location-marker" className="w-5 h-5 text-accent" />
                         {locationStatus === 'loading' ? 'Finding You...' : 'Find Nearby Stores'}
                     </button>
-                    {locationError && <p className="text-red-300 text-sm max-w-md mx-auto mt-2 bg-red-900/50 p-2 rounded-md">{locationError}</p>}
+                    {locationError && <p className="text-red-500 text-sm max-w-md mx-auto mt-2 bg-red-500/10 p-2 rounded-md">{locationError}</p>}
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto w-full animate-fade-in-up" style={{animationDelay: '400ms'}}>
+                <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl w-full animate-fade-in-up" style={{animationDelay: '400ms'}}>
                 {allStores.map(store => (
-                    <div key={store.id} className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:border-white/20 hover:-translate-y-1 flex flex-col group overflow-hidden">
-                        <div className="relative w-full h-40 object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-300">
-                            <Image src={store.bannerUrl} alt={`${store.name} banner`} layout="fill" objectFit="cover" />
+                    <div key={store.id} className="bg-secondary border border-glass-border rounded-2xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 flex flex-col group overflow-hidden">
+                        <div className="relative w-full h-48">
+                           <Image src={store.bannerUrl} alt={`${store.name} banner`} layout="fill" objectFit="cover" className="opacity-80 group-hover:opacity-100 transition-opacity duration-300" />
                         </div>
                         <div className="p-6 flex flex-col flex-grow text-left">
-                            <h2 className="text-2xl font-serif font-bold text-white mb-1 group-hover:text-accent transition-colors">{store.name}</h2>
+                            <h3 className="text-2xl font-serif font-bold text-text-primary mb-1 group-hover:text-accent transition-colors">{store.name}</h3>
                             <div className="flex justify-between items-baseline mb-6">
-                                <p className="text-white/60">{store.location}</p>
+                                <p className="text-text-secondary">{store.location}</p>
                                 {store.distance !== undefined && (
                                     <span className="text-sm font-semibold bg-accent/20 text-accent py-1 px-2 rounded-full">{store.distance.toFixed(1)} km</span>
                                 )}
@@ -115,7 +147,7 @@ const HomePageClientContent: React.FC<HomePageClientProps> = ({ stores }) => {
                     </div>
                 ))}
                 </div>
-            </div>
+            </main>
         </div>
     );
 };

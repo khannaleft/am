@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState, useMemo, useEffect } from 'react';
 import { Product, SortOption } from '@/types';
@@ -9,6 +10,7 @@ import ProductDetailPage from '@/components/ProductDetailPage';
 import Location from '@/components/Location';
 import { useSearchParams } from 'next/navigation';
 import Icon from '@/components/Icon';
+import FeaturedProductCarousel from '@/components/FeaturedProductCarousel';
 
 interface ShopPageClientProps {
     products: Product[];
@@ -60,6 +62,12 @@ const ShopPageClient: React.FC<ShopPageClientProps> = ({ products, storeId }) =>
 
     const categories = useMemo(() => ['All Categories', ...allCategories], [allCategories]);
     
+    const featuredProducts = useMemo(() => {
+        // Simple logic: feature up to 5 products that have more than one image, or just the first 5.
+        const withMultipleImages = products.filter(p => p.imageUrls.length > 1);
+        return withMultipleImages.length >= 3 ? withMultipleImages.slice(0, 5) : products.slice(0, 5);
+    }, [products]);
+
     const filteredAndSortedProducts = useMemo(() => {
         let result = products;
         if (selectedCategory !== 'All Categories') result = result.filter(p => p.category === selectedCategory);
@@ -89,6 +97,15 @@ const ShopPageClient: React.FC<ShopPageClientProps> = ({ products, storeId }) =>
     return (
         <>
             <ProductControls categories={categories} selectedCategory={selectedCategory} onCategoryChange={setSelectedCategory} searchTerm={searchTerm} onSearchChange={setSearchTerm} sortOption={sortOption} onSortChange={setSortOption} />
+            
+            {featuredProducts.length > 0 && (
+                <FeaturedProductCarousel
+                    products={featuredProducts}
+                    onProductClick={handleSelectProduct}
+                    onAddToCart={handleAddToCart}
+                />
+            )}
+
             {products.length === 0 ? <ProductListSkeleton /> : <ProductList products={filteredAndSortedProducts} onAddToCart={handleAddToCart} onProductClick={handleSelectProduct} onToggleWishlist={handleToggleWishlist} wishlistItems={wishlistItems} cartItems={currentCart} />}
             {selectedStore && <Location store={selectedStore} />}
             
