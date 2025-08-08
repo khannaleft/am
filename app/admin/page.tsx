@@ -1,3 +1,4 @@
+
 'use client';
 import React from 'react';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -33,6 +34,8 @@ export default function Admin() {
             onDeleteDiscountCode={context.handleDeleteDiscountCode}
             stores={context.stores}
             addToast={context.addToast}
+            categories={context.categories}
+            onAddCategory={context.handleAddCategory}
         />
     );
 }

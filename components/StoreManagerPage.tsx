@@ -1,8 +1,8 @@
 
-
 import React, { useState } from 'react';
 import { Product, Order, Store, Toast } from '../types';
 import Icon from './Icon';
+import AddProductModal from './AddProductModal';
 
 interface StoreManagerPageProps {
   onBack: () => void;
@@ -13,12 +13,16 @@ interface StoreManagerPageProps {
   onUpdateProductStock: (productId: number, newStock: number) => void;
   onUpdateStore: (storeId: number, updatedData: Partial<Store>) => void;
   addToast: (message: string, type?: Toast['type']) => void;
+  onAddProduct: (product: Omit<Product, 'id'>) => Promise<void>;
+  categories: string[];
+  onAddCategory: (category: string) => Promise<void>;
 }
 
 type ManagerTab = 'inventory' | 'orders' | 'details';
 
 const StoreManagerPage: React.FC<StoreManagerPageProps> = (props) => {
   const [activeTab, setActiveTab] = useState<ManagerTab>('inventory');
+  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   
   const tabs: { id: ManagerTab; name: string; icon: React.ComponentProps<typeof Icon>['name'] }[] = [
     { id: 'inventory', name: 'Inventory', icon: 'package' },
@@ -26,7 +30,12 @@ const StoreManagerPage: React.FC<StoreManagerPageProps> = (props) => {
     { id: 'details', name: 'Store Details', icon: 'map' },
   ];
 
+  const handleAddProduct = async (product: Omit<Product, 'id'>) => {
+      await props.onAddProduct(product);
+  }
+
   return (
+    <>
     <div className="container mx-auto px-4 py-12 pt-32 md:pt-40 animate-fade-in-up">
       <div className="mb-8 flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div>
@@ -62,16 +71,31 @@ const StoreManagerPage: React.FC<StoreManagerPageProps> = (props) => {
         </div>
         
         <div className="p-4 md:p-6 min-h-[400px]">
-          {activeTab === 'inventory' && <InventoryManagement {...props} />}
+          {activeTab === 'inventory' && <InventoryManagement {...props} onAddProductClick={() => setIsAddProductModalOpen(true)} />}
           {activeTab === 'orders' && <OrderManagement {...props} />}
           {activeTab === 'details' && <StoreDetailsManagement {...props} addToast={props.addToast} />}
         </div>
       </div>
     </div>
+    <AddProductModal 
+        isOpen={isAddProductModalOpen} 
+        onClose={() => setIsAddProductModalOpen(false)} 
+        onAddProduct={handleAddProduct}
+        stores={[props.store]}
+        addToast={props.addToast}
+        categories={props.categories}
+        onAddCategory={props.onAddCategory}
+        lockedStoreId={props.store.id}
+    />
+    </>
   );
 };
 
-const InventoryManagement = ({ storeProducts, onUpdateProductStock }: { storeProducts: Product[], onUpdateProductStock: (productId: number, newStock: number) => void }) => {
+const InventoryManagement = ({ storeProducts, onUpdateProductStock, onAddProductClick }: { 
+    storeProducts: Product[], 
+    onUpdateProductStock: (productId: number, newStock: number) => void,
+    onAddProductClick: () => void 
+}) => {
     
     const ProductRow: React.FC<{ product: Product }> = ({ product }) => {
         const [currentStock, setCurrentStock] = useState(product.stock);
@@ -111,7 +135,13 @@ const InventoryManagement = ({ storeProducts, onUpdateProductStock }: { storePro
 
     return (
         <div>
-            <h2 className="text-2xl font-bold mb-4">Manage Inventory ({storeProducts.length})</h2>
+            <div className="flex justify-between items-center mb-4">
+                 <h2 className="text-2xl font-bold">Manage Inventory ({storeProducts.length})</h2>
+                <button onClick={onAddProductClick} className="flex items-center gap-2 bg-accent text-white font-bold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-all duration-300">
+                    <Icon name="plus-circle" className="w-5 h-5" />
+                    Add Product
+                </button>
+            </div>
             <div className="overflow-x-auto bg-secondary p-4 rounded-lg border border-glass-border">
             <table className="w-full text-left text-sm">
                 <thead>
@@ -123,7 +153,13 @@ const InventoryManagement = ({ storeProducts, onUpdateProductStock }: { storePro
                 </tr>
                 </thead>
                 <tbody>
-                    {storeProducts.map(p => <ProductRow key={p.id} product={p} />)}
+                    {storeProducts.length > 0 ? storeProducts.map(p => <ProductRow key={p.id} product={p} />) : (
+                        <tr>
+                            <td colSpan={4} className="text-center p-8 text-text-secondary">
+                                No products found for this store.
+                            </td>
+                        </tr>
+                    )}
                 </tbody>
             </table>
             </div>

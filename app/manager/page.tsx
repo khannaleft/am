@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useMemo } from 'react';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -8,7 +9,7 @@ export default function Manager() {
     const context = useAppContext();
     const router = useRouter();
 
-    const { currentUser, products, orders, stores } = context;
+    const { currentUser, products, orders, stores, handleAddProduct, categories, handleAddCategory } = context;
 
     const { store, storeProducts, storeOrders } = useMemo(() => {
         if (currentUser?.role !== 'store_owner' || !currentUser.storeId) {
@@ -49,6 +50,9 @@ export default function Manager() {
             onUpdateProductStock={context.handleUpdateProductStock}
             onUpdateStore={context.handleUpdateStore}
             addToast={context.addToast}
+            onAddProduct={handleAddProduct}
+            categories={categories}
+            onAddCategory={handleAddCategory}
         />
     );
 }

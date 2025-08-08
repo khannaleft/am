@@ -23,7 +23,8 @@ import {
   writeBatch, 
   runTransaction, 
   query, 
-  limit 
+  limit,
+  arrayUnion
 } from 'firebase/firestore';
 
 import { Product, Store, Order, DiscountCode, User } from '@/types';
@@ -68,10 +69,19 @@ const mockDiscountCodes: DiscountCode[] = [
   { code: 'WELCOME15', type: 'percentage', value: 15 }
 ];
 
+const mockCategories: string[] = ['Face Care', 'Body Care', 'Hair Care', 'Tools'];
+
 
 // --- SEED DATA ---
 export const seedData = async () => {
   try {
+    // Seed categories
+    const categoriesDoc = await getDoc(doc(db, 'product_categories', 'all'));
+    if (!categoriesDoc.exists()) {
+        console.log("Seeding categories...");
+        await setDoc(doc(db, 'product_categories', 'all'), { names: mockCategories });
+    }
+
     const q = query(collection(db, 'products'), limit(1));
     const snapshot = await getDocs(q);
 
@@ -122,6 +132,18 @@ export const getOrders = async (): Promise<Order[]> => {
   const snap = await getDocs(collection(db, 'orders'));
   return snap.docs.map(docSnap => ({ ...docSnap.data(), id: docSnap.id }) as Order);
 };
+
+export const getCategories = async (): Promise<string[]> => {
+    const docRef = doc(db, 'product_categories', 'all');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        const data = docSnap.data();
+        // Ensure it's sorted alphabetically
+        return (data.names as string[]).sort((a, b) => a.localeCompare(b));
+    }
+    return [];
+};
+
 
 // --- USER PROFILE ---
 export const getUserProfile = async (uid: string): Promise<User | null> => {
@@ -213,4 +235,11 @@ export const addDiscountCode = async (code: DiscountCode): Promise<void> => {
 
 export const deleteDiscountCode = async (code: string): Promise<void> => {
   await deleteDoc(doc(db, 'discountCodes', code));
+};
+
+export const addCategory = async (categoryName: string): Promise<void> => {
+    const categoryRef = doc(db, "product_categories", "all");
+    await updateDoc(categoryRef, {
+        names: arrayUnion(categoryName)
+    }, { merge: true });
 };

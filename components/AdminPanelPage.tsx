@@ -7,7 +7,7 @@ import AddProductModal from './AddProductModal';
 interface AdminPanelPageProps {
   onBack: () => void;
   allProducts: Product[];
-  onAddProduct: (product: Omit<Product, 'id'>) => void;
+  onAddProduct: (product: Omit<Product, 'id'>) => Promise<void>;
   allOrders: Order[];
   onUpdateOrderStatus: (orderId: string, status: Order['status']) => void;
   allDiscountCodes: DiscountCode[];
@@ -15,6 +15,8 @@ interface AdminPanelPageProps {
   onDeleteDiscountCode: (code: string) => void;
   stores: Store[];
   addToast: (message: string, type?: Toast['type']) => void;
+  categories: string[];
+  onAddCategory: (category: string) => Promise<void>;
 }
 
 type AdminTab = 'products' | 'orders' | 'discounts';
@@ -28,6 +30,10 @@ const AdminPanelPage: React.FC<AdminPanelPageProps> = (props) => {
     { id: 'orders', name: 'Orders', icon: 'clipboard-list' },
     { id: 'discounts', name: 'Discounts', icon: 'tag' },
   ];
+
+  const handleAddProduct = async (product: Omit<Product, 'id'>) => {
+      await props.onAddProduct(product);
+  }
 
   return (
     <>
@@ -69,117 +75,173 @@ const AdminPanelPage: React.FC<AdminPanelPageProps> = (props) => {
         </div>
       </div>
     </div>
-    <AddProductModal isOpen={isAddProductModalOpen} onClose={() => setIsAddProductModalOpen(false)} onAddProduct={props.onAddProduct} stores={props.stores} addToast={props.addToast} />
+    <AddProductModal 
+        isOpen={isAddProductModalOpen} 
+        onClose={() => setIsAddProductModalOpen(false)} 
+        onAddProduct={handleAddProduct}
+        stores={props.stores} 
+        addToast={props.addToast}
+        categories={props.categories}
+        onAddCategory={props.onAddCategory}
+    />
     </>
   );
 };
 
-const ProductManagement = ({ allProducts, onAddProductClick }: { allProducts: Product[], onAddProductClick: () => void }) => (
-  <div>
-    <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Manage Products ({allProducts.length})</h2>
-        <button onClick={onAddProductClick} className="flex items-center gap-2 bg-accent text-white font-bold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-all duration-300">
-            <Icon name="plus-circle" className="w-5 h-5" />
-            Add Product
-        </button>
-    </div>
-    <div className="overflow-x-auto bg-primary p-4 rounded-lg">
-      <table className="w-full text-left">
+const ProductManagement = ({ allProducts, onAddProductClick, stores }: { allProducts: Product[], onAddProductClick: () => void, stores: Store[] }) => {
+    const getStoreName = (storeId: number) => stores.find(s => s.id === storeId)?.name || 'N/A';
+    
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">Manage Products ({allProducts.length})</h2>
+            <button onClick={onAddProductClick} className="flex items-center gap-2 bg-accent text-white font-bold py-2 px-4 rounded-lg hover:bg-opacity-80 transition-all duration-300">
+                <Icon name="plus-circle" className="w-5 h-5" />
+                Add Product
+            </button>
+        </div>
+        <div className="overflow-x-auto bg-primary p-4 rounded-lg">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-glass-border">
+                <th className="p-4 font-semibold">Name</th>
+                <th className="p-4 font-semibold">Store</th>
+                <th className="p-4 font-semibold">Category</th>
+                <th className="p-4 font-semibold">Price</th>
+                <th className="p-4 font-semibold">Stock</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allProducts.map(product => (
+                <tr key={product.id} className="border-b border-glass-border last:border-none hover:bg-secondary">
+                  <td className="p-4 font-semibold">{product.name}</td>
+                  <td className="p-4 text-text-secondary">{getStoreName(product.storeId)}</td>
+                  <td className="p-4 text-text-secondary">{product.category}</td>
+                  <td className="p-4">₹{product.price.toFixed(2)}</td>
+                  <td className="p-4">{product.stock}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+};
+
+const OrderManagement = ({ allOrders, onUpdateOrderStatus }: { allOrders: Order[], onUpdateOrderStatus: (orderId: string, status: Order['status']) => void }) => (
+    <div>
+      <h2 className="text-2xl font-bold mb-4">All Orders ({allOrders.length})</h2>
+      <div className="overflow-x-auto bg-primary p-4 rounded-lg">
+      <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-glass-border">
-            <th className="p-3">Product</th>
-            <th className="p-3">Category</th>
-            <th className="p-3">Price</th>
-            <th className="p-3">Stock</th>
+            <th className="p-4 font-semibold">Order ID</th>
+            <th className="p-4 font-semibold">User</th>
+            <th className="p-4 font-semibold">Date</th>
+            <th className="p-4 font-semibold">Total</th>
+            <th className="p-4 font-semibold">Status</th>
           </tr>
         </thead>
         <tbody>
-          {allProducts.map(p => (
-            <tr key={p.id} className="border-b border-glass-border last:border-none hover:bg-secondary/30">
-              <td className="p-3 font-semibold">{p.name}</td>
-              <td className="p-3 text-text-secondary">{p.category}</td>
-              <td className="p-3">₹{p.price.toFixed(2)}</td>
-              <td className="p-3">{p.stock}</td>
+          {allOrders.map(order => (
+            <tr key={order.id} className="border-b border-glass-border last:border-none hover:bg-secondary">
+              <td className="p-4 font-mono text-xs">{order.id}</td>
+              <td className="p-4 text-text-secondary">{order.userEmail}</td>
+              <td className="p-4">{new Date(order.date).toLocaleDateString()}</td>
+              <td className="p-4 font-semibold">₹{order.total.toFixed(2)}</td>
+              <td className="p-4">
+                <select 
+                    value={order.status}
+                    onChange={(e) => onUpdateOrderStatus(order.id, e.target.value as Order['status'])}
+                    className="p-2 rounded-lg bg-secondary border border-glass-border focus:outline-none focus:ring-1 focus:ring-accent"
+                >
+                    <option>Pending Payment</option>
+                    <option>Processing</option>
+                    <option>Shipped</option>
+                    <option>Delivered</option>
+                    <option>Cancelled</option>
+                </select>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
+      </div>
     </div>
-  </div>
 );
 
-const OrderManagement = ({ allOrders, onUpdateOrderStatus }: { allOrders: Order[], onUpdateOrderStatus: (orderId: string, status: Order['status']) => void }) => (
-  <div>
-    <h2 className="text-2xl font-bold mb-4">Manage Orders ({allOrders.length})</h2>
-    <div className="space-y-4">
-      {allOrders.map(order => (
-        <div key={order.id} className="bg-primary p-4 rounded-lg border border-glass-border">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="font-bold">{order.id}</p>
-              <p className="text-sm text-text-secondary">{order.userEmail} - {new Date(order.date).toLocaleDateString()}</p>
-              <p className="text-sm text-text-secondary">Phone: {order.phone}</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <p className="font-bold text-lg">₹{order.total.toFixed(2)}</p>
-              <select 
-                value={order.status}
-                onChange={(e) => onUpdateOrderStatus(order.id, e.target.value as Order['status'])}
-                className="p-2 rounded-lg bg-secondary border border-glass-border focus:outline-none focus:ring-1 focus:ring-accent"
-              >
-                <option>Processing</option>
-                <option>Shipped</option>
-                <option>Delivered</option>
-                <option>Cancelled</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
+const DiscountManagement = (props : {
+    allDiscountCodes: DiscountCode[],
+    onDeleteDiscountCode: (code: string) => void,
+    onAddDiscountCode: (code: DiscountCode) => void,
+    addToast: (message: string, type?: Toast['type']) => void,
+}) => {
+    const [newDiscountCode, setNewDiscountCode] = useState('');
+    const [newDiscountValue, setNewDiscountValue] = useState(0);
+    const [newDiscountType, setNewDiscountType] = useState<'percentage' | 'fixed'>('percentage');
 
-const DiscountManagement = ({ allDiscountCodes, onAddDiscountCode, onDeleteDiscountCode, addToast }: { allDiscountCodes: DiscountCode[], onAddDiscountCode: (code: DiscountCode) => void, onDeleteDiscountCode: (code: string) => void, addToast: (message: string, type?: Toast['type']) => void }) => {
-    const [newCode, setNewCode] = useState('');
-    const [newCodeType, setNewCodeType] = useState<'percentage' | 'fixed'>('percentage');
-    const [newCodeValue, setNewCodeValue] = useState(0);
-
-    const handleAdd = (e: React.FormEvent) => {
+    const handleAddDiscount = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newCode || newCodeValue <= 0) {
-            addToast("Please fill out all fields for the discount code.", 'error');
+        if (!newDiscountCode.trim() || newDiscountValue <= 0) {
+            props.addToast('Please enter a valid code and value.', 'error');
             return;
         }
-        onAddDiscountCode({ code: newCode.toUpperCase(), type: newCodeType, value: newCodeValue });
-        setNewCode('');
-        setNewCodeValue(0);
-    }
-    
+        props.onAddDiscountCode({
+            code: newDiscountCode.trim().toUpperCase(),
+            value: newDiscountValue,
+            type: newDiscountType
+        });
+        setNewDiscountCode('');
+        setNewDiscountValue(0);
+    };
+
     return (
         <div>
             <h2 className="text-2xl font-bold mb-4">Manage Discount Codes</h2>
-            <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 bg-primary p-4 rounded-lg border border-glass-border">
-                <input type="text" value={newCode} onChange={e => setNewCode(e.target.value)} placeholder="Code Name (e.g. AURA15)" className="p-3 rounded-lg bg-secondary border border-glass-border focus:outline-none focus:ring-2 focus:ring-accent" />
-                <select value={newCodeType} onChange={e => setNewCodeType(e.target.value as any)} className="p-3 rounded-lg bg-secondary border border-glass-border focus:outline-none focus:ring-2 focus:ring-accent">
-                    <option value="percentage">Percentage (%)</option>
-                    <option value="fixed">Fixed Amount (₹)</option>
-                </select>
-                <input type="number" value={newCodeValue} onChange={e => setNewCodeValue(parseFloat(e.target.value))} placeholder="Value" className="p-3 rounded-lg bg-secondary border border-glass-border focus:outline-none focus:ring-2 focus:ring-accent" />
-                <button type="submit" className="bg-accent text-white font-bold rounded-lg hover:bg-opacity-80 transition-colors">Add Code</button>
+            <form onSubmit={handleAddDiscount} className="mb-6 bg-primary p-4 rounded-lg flex flex-col md:flex-row items-end gap-4 border border-glass-border">
+                <div className="flex-grow w-full">
+                    <label className="block text-sm font-medium text-text-secondary mb-1">New Code</label>
+                    <input type="text" value={newDiscountCode} onChange={e => setNewDiscountCode(e.target.value)} placeholder="e.g., AURA20" className="w-full p-2.5 rounded-lg bg-secondary border border-glass-border focus:outline-none focus:ring-2 focus:ring-accent" />
+                </div>
+                 <div className="w-full md:w-48">
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Value</label>
+                    <input type="number" value={newDiscountValue} onChange={e => setNewDiscountValue(parseFloat(e.target.value) || 0)} className="w-full p-2.5 rounded-lg bg-secondary border border-glass-border focus:outline-none focus:ring-2 focus:ring-accent" />
+                </div>
+                 <div className="w-full md:w-48">
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Type</label>
+                     <select value={newDiscountType} onChange={e => setNewDiscountType(e.target.value as 'percentage' | 'fixed')} className="w-full p-2.5 rounded-lg bg-secondary border border-glass-border focus:outline-none focus:ring-2 focus:ring-accent">
+                        <option value="percentage">Percentage (%)</option>
+                        <option value="fixed">Fixed (₹)</option>
+                    </select>
+                </div>
+                <button type="submit" className="w-full md:w-auto bg-accent text-white font-bold py-2.5 px-6 rounded-lg hover:bg-opacity-80 transition-all duration-300">Add Code</button>
             </form>
-            <div className="space-y-2">
-                {allDiscountCodes.map(code => (
-                    <div key={code.code} className="bg-primary p-3 rounded-lg flex justify-between items-center border border-glass-border">
-                        <div>
-                            <p className="font-bold text-accent">{code.code}</p>
-                            <p className="text-sm text-text-secondary">{code.type === 'percentage' ? `${code.value}% off` : `₹${code.value} off`}</p>
-                        </div>
-                        <button onClick={() => onDeleteDiscountCode(code.code)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-full">
-                            <Icon name="trash" className="w-5 h-5"/>
-                        </button>
-                    </div>
-                ))}
+
+            <div className="overflow-x-auto bg-primary p-4 rounded-lg">
+                <table className="w-full text-left text-sm">
+                    <thead>
+                        <tr className="border-b border-glass-border">
+                            <th className="p-4 font-semibold">Code</th>
+                            <th className="p-4 font-semibold">Value</th>
+                            <th className="p-4 font-semibold">Type</th>
+                            <th className="p-4 font-semibold">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {props.allDiscountCodes.map(code => (
+                        <tr key={code.code} className="border-b border-glass-border last:border-none hover:bg-secondary">
+                            <td className="p-4 font-mono font-semibold">{code.code}</td>
+                            <td className="p-4">{code.type === 'percentage' ? `${code.value}%` : `₹${code.value.toFixed(2)}`}</td>
+                            <td className="p-4 capitalize text-text-secondary">{code.type}</td>
+                            <td className="p-4">
+                                <button onClick={() => props.onDeleteDiscountCode(code.code)} className="text-red-500 hover:underline">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
             </div>
         </div>
     );

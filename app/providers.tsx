@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
@@ -18,6 +16,7 @@ interface AppContextType {
   products: Product[];
   orders: Order[];
   discountCodes: DiscountCode[];
+  categories: string[];
   currentUser: User | null;
   isLoading: boolean;
   
@@ -47,6 +46,7 @@ interface AppContextType {
   handleAddDiscountCode: (code: DiscountCode) => Promise<void>;
   handleDeleteDiscountCode: (codeToDelete: string) => Promise<void>;
   handleUpdateStore: (storeId: number, updatedData: Partial<Store>) => Promise<void>;
+  handleAddCategory: (category: string) => Promise<void>;
 
   addToast: (message: string, type?: Toast['type']) => void;
   toasts: Toast[];
@@ -73,6 +73,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [discountCodes, setDiscountCodes] = useState<DiscountCode[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -156,16 +157,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       setIsLoading(true);
       await firebaseService.seedData();
-      const [fetchedProducts, fetchedStores, fetchedCodes, fetchedOrders] = await Promise.all([
+      const [fetchedProducts, fetchedStores, fetchedCodes, fetchedOrders, fetchedCategories] = await Promise.all([
         firebaseService.getProducts(),
         firebaseService.getStores(),
         firebaseService.getDiscountCodes(),
-        firebaseService.getOrders()
+        firebaseService.getOrders(),
+        firebaseService.getCategories()
       ]);
       setProducts(fetchedProducts);
       setStores(fetchedStores);
       setDiscountCodes(fetchedCodes);
       setOrders(fetchedOrders);
+      setCategories(fetchedCategories);
     } catch (error) {
       console.error("Failed to fetch initial data:", error);
       addToast("Failed to load store data.", "error");
@@ -338,15 +341,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await fetchAllData();
     addToast('Store details updated successfully!', 'success');
   };
+  
+  const handleAddCategory = async (category: string) => {
+    await firebaseService.addCategory(category);
+    const fetchedCategories = await firebaseService.getCategories();
+    setCategories(fetchedCategories);
+    addToast(`Category "${category}" added.`, 'success');
+  };
 
   const value: AppContextType = {
-    theme, toggleTheme, stores, products, orders, discountCodes, currentUser, isLoading,
+    theme, toggleTheme, stores, products, orders, discountCodes, categories, currentUser, isLoading,
     cartItems, wishlistItems, appliedDiscount,
     fetchAllData, handleLogin, handleSignup, handleGoogleLogin, handleLogout,
     handleAddToCart, handleToggleWishlist, handleUpdateQuantity, handleRemoveFromCart,
     handleApplyDiscount, handleRemoveDiscount, handlePlaceOrder,
     handleAddProduct, handleUpdateOrderStatus, handleUpdateProductStock,
-    handleAddDiscountCode, handleDeleteDiscountCode, handleUpdateStore,
+    handleAddDiscountCode, handleDeleteDiscountCode, handleUpdateStore, handleAddCategory,
     addToast, toasts, removeToast,
     onLoginClick, isAuthModalOpen, onCloseAuthModal,
     handleOpenCart,

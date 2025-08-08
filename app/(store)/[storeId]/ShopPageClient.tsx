@@ -1,4 +1,3 @@
-
 'use client';
 import React, { useState, useMemo, useEffect } from 'react';
 import { Product, SortOption } from '@/types';
@@ -34,7 +33,8 @@ const FloatingCartButton: React.FC<{ onClick: () => void; itemCount: number; }> 
 
 const ShopPageClient: React.FC<ShopPageClientProps> = ({ products, storeId }) => {
     const { 
-        cartItems, stores, handleAddToCart, handleToggleWishlist, wishlistItems, handleOpenCart
+        cartItems, stores, handleAddToCart, handleToggleWishlist, wishlistItems, handleOpenCart,
+        categories: allCategories
     } = useAppContext();
     
     const searchParams = useSearchParams();
@@ -58,7 +58,7 @@ const ShopPageClient: React.FC<ShopPageClientProps> = ({ products, storeId }) =>
     const currentCart = useMemo(() => cartItems[storeId] || [], [cartItems, storeId]);
     const cartItemCount = useMemo(() => currentCart.reduce((sum, item) => sum + item.quantity, 0), [currentCart]);
 
-    const categories = useMemo(() => ['All Categories', ...Array.from(new Set(products.map(p => p.category)))], [products]);
+    const categories = useMemo(() => ['All Categories', ...allCategories], [allCategories]);
     
     const filteredAndSortedProducts = useMemo(() => {
         let result = products;
