@@ -1,13 +1,12 @@
-
 'use client';
 import React, { useState, useEffect, Suspense } from 'react';
 import { Store } from '@/types';
-import { useRouter } from 'next/navigation';
 import Header from './Header';
 import Image from 'next/image';
 import Icon from './Icon';
 import OfferCarousel from './OfferCarousel';
 import { useAppContext } from '@/hooks/useAppContext';
+import Link from 'next/link';
 
 interface HomePageClientProps {
     stores: Store[];
@@ -18,7 +17,6 @@ interface StoreWithDistance extends Store {
 }
 
 const HomePageClientContent: React.FC<HomePageClientProps> = ({ stores }) => {
-    const router = useRouter();
     const { offers } = useAppContext();
 
     const [allStores, setAllStores] = useState<StoreWithDistance[]>(stores);
@@ -28,10 +26,6 @@ const HomePageClientContent: React.FC<HomePageClientProps> = ({ stores }) => {
     useEffect(() => {
         setAllStores(stores);
     }, [stores]);
-
-    const handleSelectStore = (slug: string) => {
-        router.push(`/${slug}`);
-    };
 
     const haversineDistance = (coords1: { latitude: number; longitude: number }, coords2: { latitude: number; longitude: number }): number => {
         const toRad = (x: number) => (x * Math.PI) / 180;
@@ -98,7 +92,11 @@ const HomePageClientContent: React.FC<HomePageClientProps> = ({ stores }) => {
                 
                 <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl w-full animate-fade-in-up" style={{animationDelay: '400ms'}}>
                 {allStores.map(store => (
-                    <div key={store.id} className="bg-secondary border border-glass-border rounded-2xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 flex flex-col group overflow-hidden">
+                    <Link
+                      key={store.id}
+                      href={`/${store.slug}`}
+                      className="bg-secondary border border-glass-border rounded-2xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 flex flex-col group overflow-hidden cursor-pointer"
+                    >
                         <div className="relative w-full h-48">
                            <Image src={store.bannerUrl} alt={`${store.name} banner`} layout="fill" objectFit="cover" className="opacity-80 group-hover:opacity-100 transition-opacity duration-300" />
                         </div>
@@ -110,14 +108,12 @@ const HomePageClientContent: React.FC<HomePageClientProps> = ({ stores }) => {
                                     <span className="text-sm font-semibold bg-accent/20 text-accent py-1 px-2 rounded-full">{store.distance.toFixed(1)} km</span>
                                 )}
                             </div>
-                            <button
-                            onClick={() => handleSelectStore(store.slug)}
-                            className="mt-auto bg-accent text-white font-bold py-3 px-6 rounded-lg hover:opacity-85 transition-all duration-300 transform group-hover:scale-105 self-start"
-                            >
-                            Shop Here
-                            </button>
+                            <div className="mt-auto self-start flex items-center gap-2 text-accent font-bold">
+                                <span>Shop Now</span>
+                                <Icon name="chevron-right" className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
+                            </div>
                         </div>
-                    </div>
+                    </Link>
                 ))}
                 </div>
             </main>
