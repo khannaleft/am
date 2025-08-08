@@ -1,6 +1,6 @@
 // firebase.ts - Using Firebase v10+ modular SDK.
 
-import { initializeApp, getApp, getApps } from '@firebase/app';
+import { initializeApp, getApp, getApps } from 'firebase/app';
 import { 
   getAuth, 
   GoogleAuthProvider, 
@@ -10,7 +10,7 @@ import {
   signInWithPopup,
   signOut,
   User as FirebaseAuthUser
-} from '@firebase/auth';
+} from 'firebase/auth';
 import { 
   getFirestore, 
   collection, 
@@ -24,7 +24,7 @@ import {
   runTransaction, 
   query, 
   limit 
-} from '@firebase/firestore';
+} from 'firebase/firestore';
 
 import { Product, Store, Order, DiscountCode, User } from '@/types';
 
