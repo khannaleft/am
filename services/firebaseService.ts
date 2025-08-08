@@ -172,7 +172,21 @@ export const seedData = async () => {
 // --- FETCH FUNCTIONS ---
 export const getStores = async (): Promise<Store[]> => {
   const snap = await getDocs(collection(db, 'stores'));
-  return snap.docs.map(doc => doc.data() as Store);
+  return snap.docs.map(doc => {
+      const data = doc.data();
+      // Fallback for generating a slug if it's missing from the database record.
+      // This ensures backwards compatibility with older data structures.
+      const slug = data.slug || (data.name ? data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : `store-${data.id}`);
+      return {
+        id: data.id,
+        name: data.name,
+        slug: slug,
+        location: data.location,
+        bannerUrl: data.bannerUrl,
+        latitude: data.latitude,
+        longitude: data.longitude,
+      } as Store;
+  });
 };
 
 export const getProducts = async (): Promise<Product[]> => {
@@ -291,7 +305,7 @@ export const addCategory = async (categoryName: string): Promise<void> => {
     const categoryRef = doc(db, "product_categories", "all");
     await updateDoc(categoryRef, {
         names: arrayUnion(categoryName)
-    });
+    }, { merge: true });
 };
 
 export const addOffer = async (offerData: Omit<Offer, 'id'>): Promise<Offer> => {

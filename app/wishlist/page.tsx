@@ -7,7 +7,7 @@ import WishlistPage from '@/components/WishlistPage';
 import { useRouter } from 'next/navigation';
 
 export default function Wishlist() {
-    const { products, wishlistItems, cartItems, handleAddToCart, handleToggleWishlist } = useAppContext();
+    const { products, wishlistItems, cartItems, handleAddToCart, handleToggleWishlist, stores } = useAppContext();
     const router = useRouter();
 
     const wishlistedProducts = products.filter(p => wishlistItems.includes(p.id));
@@ -15,7 +15,10 @@ export default function Wishlist() {
     const handleProductClick = (productId: number) => {
         const product = products.find(p => p.id === productId);
         if (product) {
-            router.push(`/${product.storeId}?product=${productId}`);
+            const store = stores.find(s => s.id === product.storeId);
+            if (store) {
+                 router.push(`/${store.slug}?product=${productId}`);
+            }
         }
     };
     
