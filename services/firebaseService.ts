@@ -1,3 +1,4 @@
+
 // firebase.ts - Using Firebase v10+ modular SDK.
 
 import { initializeApp, getApp, getApps } from 'firebase/app';
@@ -27,7 +28,7 @@ import {
   arrayUnion
 } from 'firebase/firestore';
 
-import { Product, Store, Order, DiscountCode, User } from '@/types';
+import { Product, Store, Order, DiscountCode, User, Offer } from '@/types';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCQ_SeHByThTTU9VLdNYnG3NDSOgUCFZI8",
@@ -58,8 +59,8 @@ export {
 
 // --- MOCK DATA ---
 const mockStores: Store[] = [
-  { id: 1, name: 'Aura - Downtown', location: '123 Main St, Anytown, USA', bannerUrl: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=2500&auto=format&fit=crop', latitude: 34.0522, longitude: -118.2437 },
-  { id: 2, name: 'Aura - Beachside', location: '456 Ocean Ave, Beachtown, USA', bannerUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=2000&auto=format&fit=crop', latitude: 33.9934, longitude: -118.4763 }
+  { id: 1, name: 'Aura - Downtown', slug: 'aura-downtown', location: '123 Main St, Anytown, USA', bannerUrl: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=2500&auto=format&fit=crop', latitude: 34.0522, longitude: -118.2437 },
+  { id: 2, name: 'Aura - Beachside', slug: 'aura-beachside', location: '456 Ocean Ave, Beachtown, USA', bannerUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=2000&auto=format&fit=crop', latitude: 33.9934, longitude: -118.4763 }
 ];
 
 const mockProducts: Product[] = [];
@@ -71,39 +72,95 @@ const mockDiscountCodes: DiscountCode[] = [
 
 const mockCategories: string[] = ['Face Care', 'Body Care', 'Hair Care', 'Tools'];
 
+const mockOffers: Omit<Offer, 'id'>[] = [
+  {
+    title: 'First Purchase, 15% Off',
+    description: 'Begin your journey with Aura and enjoy a special discount on your first order. Use code AURA15.',
+    imageUrl: 'https://images.unsplash.com/photo-1598454449072-3544a3fb3af8?q=80&w=2574&auto=format&fit=crop',
+    ctaText: 'Shop Face Care',
+    ctaLink: '/aura-downtown' 
+  },
+  {
+    title: 'Free Shipping Over ₹5000',
+    description: 'Indulge in our complete collection and we\'ll deliver it to your doorstep, on us.',
+    imageUrl: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=2564&auto=format&fit=crop',
+    ctaText: 'Explore All Products',
+    ctaLink: '/aura-beachside'
+  },
+  {
+    title: 'New! The Serenity Body Oil',
+    description: 'Discover our latest creation, a calming blend of lavender and chamomile for ultimate relaxation.',
+    imageUrl: 'https://images.unsplash.com/photo-1563237023-b1e970526dcb?q=80&w=2574&auto=format&fit=crop',
+    ctaText: 'Discover Now',
+    ctaLink: '/aura-downtown'
+  },
+];
+
 
 // --- SEED DATA ---
 export const seedData = async () => {
   try {
+    const batch = writeBatch(db);
+    let needsCommit = false;
+
     // Seed categories
     const categoriesDoc = await getDoc(doc(db, 'product_categories', 'all'));
     if (!categoriesDoc.exists()) {
         console.log("Seeding categories...");
-        await setDoc(doc(db, 'product_categories', 'all'), { names: mockCategories });
+        batch.set(doc(db, 'product_categories', 'all'), { names: mockCategories });
+        needsCommit = true;
     }
 
-    const q = query(collection(db, 'products'), limit(1));
-    const snapshot = await getDocs(q);
+    // Seed products
+    const productsQuery = query(collection(db, 'products'), limit(1));
+    const productsSnapshot = await getDocs(productsQuery);
+    if (productsSnapshot.empty) {
+        console.log("Seeding products...");
+        mockProducts.forEach(product => {
+            const ref = doc(db, 'products', product.id.toString());
+            batch.set(ref, product);
+        });
+        needsCommit = true;
+    }
+    
+    // Seed stores
+    const storesQuery = query(collection(db, 'stores'), limit(1));
+    const storesSnapshot = await getDocs(storesQuery);
+    if (storesSnapshot.empty) {
+        console.log("Seeding stores...");
+        mockStores.forEach(store => {
+            const ref = doc(db, 'stores', store.id.toString());
+            batch.set(ref, store);
+        });
+        needsCommit = true;
+    }
 
-    if (snapshot.empty) {
-      console.log("Seeding initial data to Firestore...");
-      const batch = writeBatch(db);
+    // Seed discount codes
+    const discountsQuery = query(collection(db, 'discountCodes'), limit(1));
+    const discountsSnapshot = await getDocs(discountsQuery);
+    if (discountsSnapshot.empty) {
+        console.log("Seeding discount codes...");
+        mockDiscountCodes.forEach(code => {
+            const ref = doc(db, 'discountCodes', code.code);
+            batch.set(ref, code);
+        });
+        needsCommit = true;
+    }
 
-      mockStores.forEach(store => {
-        const ref = doc(db, 'stores', store.id.toString());
-        batch.set(ref, store);
-      });
+    // Seed offers
+    const offersQuery = query(collection(db, 'offers'), limit(1));
+    const offersSnapshot = await getDocs(offersQuery);
+    if (offersSnapshot.empty) {
+        console.log("Seeding offers...");
+        mockOffers.forEach(offer => {
+            const ref = doc(collection(db, 'offers'));
+            batch.set(ref, offer);
+        });
+        needsCommit = true;
+    }
 
-      mockProducts.forEach(product => {
-        const ref = doc(db, 'products', product.id.toString());
-        batch.set(ref, product);
-      });
-
-      mockDiscountCodes.forEach(code => {
-        const ref = doc(db, 'discountCodes', code.code);
-        batch.set(ref, code);
-      });
-
+    if (needsCommit) {
+      console.log("Committing seed data to Firestore...");
       await batch.commit();
       console.log("Seeding complete.");
     }
@@ -144,6 +201,11 @@ export const getCategories = async (): Promise<string[]> => {
     return [];
 };
 
+export const getOffers = async (): Promise<Offer[]> => {
+  const snap = await getDocs(collection(db, 'offers'));
+  return snap.docs.map(docSnap => ({ ...docSnap.data(), id: docSnap.id }) as Offer);
+};
+
 
 // --- USER PROFILE ---
 export const getUserProfile = async (uid: string): Promise<User | null> => {
@@ -163,21 +225,15 @@ export const createUserProfile = async (user: FirebaseUser, name?: string): Prom
   return newUser;
 };
 
-// --- ORDER / PRODUCT MUTATIONS ---
+// --- MUTATION FUNCTIONS ---
 export const placeOrder = async (orderData: Omit<Order, 'id'>): Promise<string> => {
     let orderId = '';
     await runTransaction(db, async (transaction) => {
         const isPendingPayment = orderData.status === 'Pending Payment';
         
-        // Use a predefined ID for pending payments, otherwise create a new one.
-        const orderRef = isPendingPayment 
-            ? doc(db, "orders", `AURA-${Date.now()}`)
-            : doc(collection(db, "orders"));
-        
+        const orderRef = doc(collection(db, "orders"));
         orderId = orderRef.id;
 
-        // Only deduct stock if payment is NOT pending.
-        // For pending payments, we just create the order record.
         if (!isPendingPayment) {
             const productReads = orderData.items.map(item => {
                 const productRef = doc(db, 'products', item.id.toString());
@@ -190,22 +246,16 @@ export const placeOrder = async (orderData: Omit<Order, 'id'>): Promise<string> 
 
             const productDetails = await Promise.all(productReads);
 
-            const updates: { productRef: any; newStock: number }[] = [];
             for (const { productSnap, item, productRef } of productDetails) {
                 if (!productSnap.exists()) throw new Error(`Product ${item.name} could not be found.`);
                 const productData = productSnap.data() as Product;
                 const newStock = productData.stock - item.quantity;
                 if (newStock < 0) throw new Error(`Not enough stock for ${productData.name}.`);
-                updates.push({ productRef, newStock });
-            }
-
-            for (const { productRef, newStock } of updates) {
                 transaction.update(productRef, { stock: newStock });
             }
         }
         
-        // Set the order document in the database.
-        transaction.set(orderRef, orderData);
+        transaction.set(orderRef, { ...orderData, id: orderId });
     });
     return orderId;
 };
@@ -241,5 +291,19 @@ export const addCategory = async (categoryName: string): Promise<void> => {
     const categoryRef = doc(db, "product_categories", "all");
     await updateDoc(categoryRef, {
         names: arrayUnion(categoryName)
-    });
+    }, { merge: true });
+};
+
+export const addOffer = async (offerData: Omit<Offer, 'id'>): Promise<Offer> => {
+    const newDocRef = doc(collection(db, "offers"));
+    await setDoc(newDocRef, offerData);
+    return { ...offerData, id: newDocRef.id };
+};
+
+export const updateOffer = async (offerId: string, offerData: Partial<Omit<Offer, 'id'>>): Promise<void> => {
+    await updateDoc(doc(db, "offers", offerId), offerData);
+};
+
+export const deleteOffer = async (offerId: string): Promise<void> => {
+    await deleteDoc(doc(db, "offers", offerId));
 };

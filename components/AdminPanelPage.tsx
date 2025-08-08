@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
-import { Product, Order, DiscountCode, Store, Toast } from '../types';
+import { Product, Order, DiscountCode, Store, Toast, Offer } from '../types';
 import Icon from './Icon';
 import AddProductModal from './AddProductModal';
+import OfferManagement from './OfferManagement';
 
 interface AdminPanelPageProps {
   onBack: () => void;
@@ -17,9 +18,13 @@ interface AdminPanelPageProps {
   addToast: (message: string, type?: Toast['type']) => void;
   categories: string[];
   onAddCategory: (category: string) => Promise<void>;
+  offers: Offer[];
+  onAddOffer: (offerData: Omit<Offer, 'id'>) => Promise<void>;
+  onUpdateOffer: (offerId: string, offerData: Partial<Omit<Offer, 'id'>>) => Promise<void>;
+  onDeleteOffer: (offerId: string) => Promise<void>;
 }
 
-type AdminTab = 'products' | 'orders' | 'discounts';
+type AdminTab = 'products' | 'orders' | 'discounts' | 'offers';
 
 const AdminPanelPage: React.FC<AdminPanelPageProps> = (props) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('products');
@@ -29,6 +34,7 @@ const AdminPanelPage: React.FC<AdminPanelPageProps> = (props) => {
     { id: 'products', name: 'Products', icon: 'package' },
     { id: 'orders', name: 'Orders', icon: 'clipboard-list' },
     { id: 'discounts', name: 'Discounts', icon: 'tag' },
+    { id: 'offers', name: 'Offers', icon: 'sparkles' },
   ];
 
   const handleAddProduct = async (product: Omit<Product, 'id'>) => {
@@ -55,12 +61,12 @@ const AdminPanelPage: React.FC<AdminPanelPageProps> = (props) => {
       </div>
       
       <div className="bg-secondary/50 border border-glass-border rounded-2xl shadow-lg p-2 md:p-4">
-        <div className="flex items-center border-b border-glass-border">
+        <div className="flex items-center border-b border-glass-border overflow-x-auto">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 py-3 px-4 md:px-6 font-semibold transition-colors ${activeTab === tab.id ? 'text-accent border-b-2 border-accent' : 'text-text-secondary hover:text-text-primary'}`}
+              className={`flex items-center gap-2 py-3 px-4 md:px-6 font-semibold transition-colors flex-shrink-0 ${activeTab === tab.id ? 'text-accent border-b-2 border-accent' : 'text-text-secondary hover:text-text-primary'}`}
             >
               <Icon name={tab.icon} className="w-5 h-5" />
               <span>{tab.name}</span>
@@ -68,10 +74,11 @@ const AdminPanelPage: React.FC<AdminPanelPageProps> = (props) => {
           ))}
         </div>
         
-        <div className="p-4 md:p-6">
+        <div className="p-4 md:p-6 min-h-[400px]">
           {activeTab === 'products' && <ProductManagement {...props} onAddProductClick={() => setIsAddProductModalOpen(true)} />}
           {activeTab === 'orders' && <OrderManagement {...props} />}
           {activeTab === 'discounts' && <DiscountManagement {...props} addToast={props.addToast} />}
+          {activeTab === 'offers' && <OfferManagement offers={props.offers} onAddOffer={props.onAddOffer} onUpdateOffer={props.onUpdateOffer} onDeleteOffer={props.onDeleteOffer} />}
         </div>
       </div>
     </div>

@@ -36,6 +36,10 @@ export default function Admin() {
             addToast={context.addToast}
             categories={context.categories}
             onAddCategory={context.handleAddCategory}
+            offers={context.offers}
+            onAddOffer={context.handleAddOffer}
+            onUpdateOffer={context.handleUpdateOffer}
+            onDeleteOffer={context.handleDeleteOffer}
         />
     );
 }

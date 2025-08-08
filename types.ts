@@ -3,6 +3,7 @@
 export interface Store {
   id: number;
   name: string;
+  slug: string;
   location: string;
   bannerUrl: string;
   latitude: number;
@@ -66,4 +67,13 @@ export type SortOption = 'default' | 'price-asc' | 'price-desc' | 'name-asc' | '
 export interface ChatMessage {
   role: 'user' | 'model';
   content: string;
+}
+
+export interface Offer {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  ctaText: string;
+  ctaLink: string;
 }

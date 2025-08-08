@@ -1,7 +1,8 @@
+
 'use client';
 
 import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { Product, CartItem, Theme, User, Order, DiscountCode, Store, Toast } from '@/types';
+import { Product, CartItem, Theme, User, Order, DiscountCode, Store, Toast, Offer } from '@/types';
 import * as firebaseService from '@/services/firebaseService';
 import { onAuthStateChanged, signOut, FirebaseUser } from '@/services/firebaseService';
 import useLocalStorage from '@/hooks/useLocalStorage';
@@ -15,6 +16,7 @@ interface AppContextType {
   stores: Store[];
   products: Product[];
   orders: Order[];
+  offers: Offer[];
   discountCodes: DiscountCode[];
   categories: string[];
   currentUser: User | null;
@@ -47,6 +49,10 @@ interface AppContextType {
   handleDeleteDiscountCode: (codeToDelete: string) => Promise<void>;
   handleUpdateStore: (storeId: number, updatedData: Partial<Store>) => Promise<void>;
   handleAddCategory: (category: string) => Promise<void>;
+  
+  handleAddOffer: (offerData: Omit<Offer, 'id'>) => Promise<void>;
+  handleUpdateOffer: (offerId: string, offerData: Partial<Omit<Offer, 'id'>>) => Promise<void>;
+  handleDeleteOffer: (offerId: string) => Promise<void>;
 
   addToast: (message: string, type?: Toast['type']) => void;
   toasts: Toast[];
@@ -72,6 +78,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [stores, setStores] = useState<Store[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
   const [discountCodes, setDiscountCodes] = useState<DiscountCode[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -157,18 +164,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       setIsLoading(true);
       await firebaseService.seedData();
-      const [fetchedProducts, fetchedStores, fetchedCodes, fetchedOrders, fetchedCategories] = await Promise.all([
+      const [fetchedProducts, fetchedStores, fetchedCodes, fetchedOrders, fetchedCategories, fetchedOffers] = await Promise.all([
         firebaseService.getProducts(),
         firebaseService.getStores(),
         firebaseService.getDiscountCodes(),
         firebaseService.getOrders(),
-        firebaseService.getCategories()
+        firebaseService.getCategories(),
+        firebaseService.getOffers()
       ]);
       setProducts(fetchedProducts);
       setStores(fetchedStores);
       setDiscountCodes(fetchedCodes);
       setOrders(fetchedOrders);
       setCategories(fetchedCategories);
+      setOffers(fetchedOffers);
     } catch (error) {
       console.error("Failed to fetch initial data:", error);
       addToast("Failed to load store data.", "error");
@@ -349,14 +358,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addToast(`Category "${category}" added.`, 'success');
   };
 
+  const handleAddOffer = async (offerData: Omit<Offer, 'id'>) => {
+    await firebaseService.addOffer(offerData);
+    await fetchAllData();
+    addToast('Offer added successfully!', 'success');
+  };
+
+  const handleUpdateOffer = async (offerId: string, offerData: Partial<Omit<Offer, 'id'>>) => {
+    await firebaseService.updateOffer(offerId, offerData);
+    await fetchAllData();
+    addToast('Offer updated successfully!', 'success');
+  };
+
+  const handleDeleteOffer = async (offerId: string) => {
+    await firebaseService.deleteOffer(offerId);
+    await fetchAllData();
+    addToast('Offer deleted.', 'info');
+  };
+
   const value: AppContextType = {
-    theme, toggleTheme, stores, products, orders, discountCodes, categories, currentUser, isLoading,
+    theme, toggleTheme, stores, products, orders, offers, discountCodes, categories, currentUser, isLoading,
     cartItems, wishlistItems, appliedDiscount,
     fetchAllData, handleLogin, handleSignup, handleGoogleLogin, handleLogout,
     handleAddToCart, handleToggleWishlist, handleUpdateQuantity, handleRemoveFromCart,
     handleApplyDiscount, handleRemoveDiscount, handlePlaceOrder,
     handleAddProduct, handleUpdateOrderStatus, handleUpdateProductStock,
     handleAddDiscountCode, handleDeleteDiscountCode, handleUpdateStore, handleAddCategory,
+    handleAddOffer, handleUpdateOffer, handleDeleteOffer,
     addToast, toasts, removeToast,
     onLoginClick, isAuthModalOpen, onCloseAuthModal,
     handleOpenCart,

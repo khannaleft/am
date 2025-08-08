@@ -9,7 +9,11 @@ export default function Manager() {
     const context = useAppContext();
     const router = useRouter();
 
-    const { currentUser, products, orders, stores, handleAddProduct, categories, handleAddCategory } = context;
+    const { 
+        currentUser, products, orders, stores, 
+        handleAddProduct, categories, handleAddCategory, 
+        offers, handleAddOffer, handleUpdateOffer, handleDeleteOffer 
+    } = context;
 
     const { store, storeProducts, storeOrders } = useMemo(() => {
         if (currentUser?.role !== 'store_owner' || !currentUser.storeId) {
@@ -53,6 +57,10 @@ export default function Manager() {
             onAddProduct={handleAddProduct}
             categories={categories}
             onAddCategory={handleAddCategory}
+            offers={offers}
+            onAddOffer={handleAddOffer}
+            onUpdateOffer={handleUpdateOffer}
+            onDeleteOffer={handleDeleteOffer}
         />
     );
 }

@@ -1,19 +1,26 @@
+
 import ShopPageClient from "./ShopPageClient";
-import { getProducts } from "@/services/firebaseService";
+import { getProducts, getStores } from "@/services/firebaseService";
 import { notFound } from "next/navigation";
 
 interface ShopPageProps {
-  params: { storeId: string };
+  params: { storeId: string }; // This is the slug
 }
 
 export default async function ShopPage({ params }: ShopPageProps) {
-  const allProducts = await getProducts();
-  const storeId = Number(params.storeId);
+  const [allProducts, allStores] = await Promise.all([
+    getProducts(),
+    getStores()
+  ]);
+  const slug = params.storeId;
 
-  if (isNaN(storeId)) {
+  const currentStore = allStores.find(s => s.slug === slug);
+
+  if (!currentStore) {
     notFound();
   }
   
+  const storeId = currentStore.id;
   const storeProducts = allProducts.filter(p => p.storeId === storeId);
   
   return <ShopPageClient products={storeProducts} storeId={storeId} />;

@@ -5,16 +5,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Icon from './Icon';
 import Image from 'next/image';
 import Link from 'next/link';
-
-// Interface for offers for the carousel
-export interface Offer {
-  id: number;
-  title: string;
-  description: string;
-  imageUrl: string;
-  ctaText: string;
-  ctaLink: string;
-}
+import { Offer } from '@/types';
 
 interface OfferCarouselProps {
   offers: Offer[];
@@ -24,10 +15,12 @@ const OfferCarousel: React.FC<OfferCarouselProps> = ({ offers }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const nextSlide = useCallback(() => {
+    if (offers.length === 0) return;
     setCurrentIndex(prevIndex => (prevIndex === offers.length - 1 ? 0 : prevIndex + 1));
   }, [offers.length]);
 
   const prevSlide = () => {
+    if (offers.length === 0) return;
     setCurrentIndex(prevIndex => (prevIndex === 0 ? offers.length - 1 : prevIndex - 1));
   };
 

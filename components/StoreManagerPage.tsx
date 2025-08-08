@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
-import { Product, Order, Store, Toast } from '../types';
+import { Product, Order, Store, Toast, Offer } from '../types';
 import Icon from './Icon';
 import AddProductModal from './AddProductModal';
+import OfferManagement from './OfferManagement';
 
 interface StoreManagerPageProps {
   onBack: () => void;
@@ -16,9 +17,13 @@ interface StoreManagerPageProps {
   onAddProduct: (product: Omit<Product, 'id'>) => Promise<void>;
   categories: string[];
   onAddCategory: (category: string) => Promise<void>;
+  offers: Offer[];
+  onAddOffer: (offerData: Omit<Offer, 'id'>) => Promise<void>;
+  onUpdateOffer: (offerId: string, offerData: Partial<Omit<Offer, 'id'>>) => Promise<void>;
+  onDeleteOffer: (offerId: string) => Promise<void>;
 }
 
-type ManagerTab = 'inventory' | 'orders' | 'details';
+type ManagerTab = 'inventory' | 'orders' | 'details' | 'offers';
 
 const StoreManagerPage: React.FC<StoreManagerPageProps> = (props) => {
   const [activeTab, setActiveTab] = useState<ManagerTab>('inventory');
@@ -27,6 +32,7 @@ const StoreManagerPage: React.FC<StoreManagerPageProps> = (props) => {
   const tabs: { id: ManagerTab; name: string; icon: React.ComponentProps<typeof Icon>['name'] }[] = [
     { id: 'inventory', name: 'Inventory', icon: 'package' },
     { id: 'orders', name: 'Orders', icon: 'clipboard-list' },
+    { id: 'offers', name: 'Offers', icon: 'sparkles' },
     { id: 'details', name: 'Store Details', icon: 'map' },
   ];
 
@@ -73,6 +79,7 @@ const StoreManagerPage: React.FC<StoreManagerPageProps> = (props) => {
         <div className="p-4 md:p-6 min-h-[400px]">
           {activeTab === 'inventory' && <InventoryManagement {...props} onAddProductClick={() => setIsAddProductModalOpen(true)} />}
           {activeTab === 'orders' && <OrderManagement {...props} />}
+          {activeTab === 'offers' && <OfferManagement offers={props.offers} onAddOffer={props.onAddOffer} onUpdateOffer={props.onUpdateOffer} onDeleteOffer={props.onDeleteOffer} />}
           {activeTab === 'details' && <StoreDetailsManagement {...props} addToast={props.addToast} />}
         </div>
       </div>

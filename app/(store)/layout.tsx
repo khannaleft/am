@@ -1,14 +1,20 @@
+
 import React from 'react';
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import { getStores } from '@/services/firebaseService';
 
-export default function StoreLayout({
+export default async function StoreLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
-  params: { storeId: string }
+  params: { storeId: string } // This is actually the slug now
 }) {
+  const stores = await getStores();
+  const currentStore = stores.find(s => s.slug === params.storeId);
+  const selectedStoreId = currentStore ? currentStore.id : null;
+
   return (
     <div className="bg-primary min-h-screen text-text-primary transition-colors duration-500">
       <div className="fixed inset-0 z-[-1] overflow-hidden">
@@ -17,7 +23,7 @@ export default function StoreLayout({
       </div>
 
       <div className="relative z-10 flex flex-col min-h-screen">
-          <Header selectedStoreId={Number(params.storeId)} />
+          <Header selectedStoreId={selectedStoreId} />
           <main className="flex-grow">
               {children}
           </main>

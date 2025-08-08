@@ -147,8 +147,11 @@ const Header: React.FC<HeaderProps> = ({ selectedStoreId }) => {
     const onProductClickFromPopover = (productId: number) => {
         const product = products.find(p => p.id === productId);
         if (product) {
-            router.push(`/${product.storeId}?product=${productId}`);
-            setIsWishlistHovered(false); // Close popover on click
+            const store = stores.find(s => s.id === product.storeId);
+            if (store) {
+                 router.push(`/${store.slug}?product=${productId}`);
+                 setIsWishlistHovered(false); // Close popover on click
+            }
         }
     };
     
@@ -209,7 +212,7 @@ const Header: React.FC<HeaderProps> = ({ selectedStoreId }) => {
             {selectedStoreId && (
                 <>
                  <div className="relative" onMouseEnter={() => setIsWishlistHovered(true)} onMouseLeave={() => setIsWishlistHovered(false)}>
-                    <NavButton href={`/wishlist`} aria-label="Open wishlist" hasBadge={wishlistItemCount > 0} badgeCount={wishlistItemCount}>
+                    <NavButton href={`/${currentStore?.slug}/wishlist`} aria-label="Open wishlist" hasBadge={wishlistItemCount > 0} badgeCount={wishlistItemCount}>
                         <Icon name="heart" className={`w-5 h-5 ${wishlistItemCount > 0 ? 'fill-accent text-accent' : 'fill-none'}`} />
                     </NavButton>
                      {isWishlistHovered && (

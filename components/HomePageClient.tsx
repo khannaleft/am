@@ -6,36 +6,8 @@ import { useRouter } from 'next/navigation';
 import Header from './Header';
 import Image from 'next/image';
 import Icon from './Icon';
-import OfferCarousel, { Offer } from './OfferCarousel';
-
-// Mock data for the carousel offers
-const offers: Offer[] = [
-  {
-    id: 1,
-    title: 'First Purchase, 15% Off',
-    description: 'Begin your journey with Aura and enjoy a special discount on your first order. Use code AURA15.',
-    imageUrl: 'https://images.unsplash.com/photo-1598454449072-3544a3fb3af8?q=80&w=2574&auto=format&fit=crop',
-    ctaText: 'Shop Face Care',
-    ctaLink: '/1' 
-  },
-  {
-    id: 2,
-    title: 'Free Shipping Over ₹5000',
-    description: 'Indulge in our complete collection and we\'ll deliver it to your doorstep, on us.',
-    imageUrl: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=2564&auto=format&fit=crop',
-    ctaText: 'Explore All Products',
-    ctaLink: '/2'
-  },
-  {
-    id: 3,
-    title: 'New! The Serenity Body Oil',
-    description: 'Discover our latest creation, a calming blend of lavender and chamomile for ultimate relaxation.',
-    imageUrl: 'https://images.unsplash.com/photo-1563237023-b1e970526dcb?q=80&w=2574&auto=format&fit=crop',
-    ctaText: 'Discover Now',
-    ctaLink: '/1'
-  },
-];
-
+import OfferCarousel from './OfferCarousel';
+import { useAppContext } from '@/hooks/useAppContext';
 
 interface HomePageClientProps {
     stores: Store[];
@@ -47,6 +19,7 @@ interface StoreWithDistance extends Store {
 
 const HomePageClientContent: React.FC<HomePageClientProps> = ({ stores }) => {
     const router = useRouter();
+    const { offers } = useAppContext();
 
     const [allStores, setAllStores] = useState<StoreWithDistance[]>(stores);
     const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -56,8 +29,8 @@ const HomePageClientContent: React.FC<HomePageClientProps> = ({ stores }) => {
         setAllStores(stores);
     }, [stores]);
 
-    const handleSelectStore = (id: number) => {
-        router.push(`/${id}`);
+    const handleSelectStore = (slug: string) => {
+        router.push(`/${slug}`);
     };
 
     const haversineDistance = (coords1: { latitude: number; longitude: number }, coords2: { latitude: number; longitude: number }): number => {
@@ -138,7 +111,7 @@ const HomePageClientContent: React.FC<HomePageClientProps> = ({ stores }) => {
                                 )}
                             </div>
                             <button
-                            onClick={() => handleSelectStore(store.id)}
+                            onClick={() => handleSelectStore(store.slug)}
                             className="mt-auto bg-accent text-white font-bold py-3 px-6 rounded-lg hover:opacity-85 transition-all duration-300 transform group-hover:scale-105 self-start"
                             >
                             Shop Here
